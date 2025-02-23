@@ -1,3 +1,4 @@
+
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -90,10 +91,10 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-4 h-full">
       <Card 
         ref={cardRef}
-        className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6 relative overflow-hidden`}
+        className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6 relative overflow-hidden flex-shrink-0`}
         onMouseMove={handleMouseMove}
       >
         {type === 'cash' && (
@@ -119,6 +120,9 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
             <h3 className="text-lg font-medium text-white/90">{title}</h3>
             {interestRate && (
               <p className="text-sm font-medium text-white/75">{interestRate}</p>
+            )}
+            {!interestRate && (
+              <p className="text-sm font-medium text-white/75">&nbsp;</p>
             )}
           </div>
           <motion.div
@@ -146,8 +150,8 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
         </div>
       </Card>
 
-      {projections && amount > 0 && (
-        <Card className="p-4 bg-white/50 backdrop-blur-sm">
+      {projections && amount > 0 ? (
+        <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
           <div className="h-32 mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
@@ -195,6 +199,16 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
               <span>5 Years:</span>
               <span className="font-medium">{formatCurrency(projections.fiveYears)}</span>
             </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
+          <div className="h-32 mb-4 flex items-center justify-center text-gray-400">
+            <p>No projections available for cash accounts</p>
+          </div>
+          <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
+          <div className="space-y-1 text-sm text-gray-400">
+            <p className="text-center">Consider moving funds to a savings or investment account to see growth projections</p>
           </div>
         </Card>
       )}
