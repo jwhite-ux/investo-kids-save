@@ -9,6 +9,14 @@ interface Balances {
   investments: number;
 }
 
+interface Transaction {
+  id: string;
+  date: Date;
+  amount: number;
+  type: "add" | "subtract";
+  category: "cash" | "savings" | "investments";
+}
+
 const Index = () => {
   const [balances, setBalances] = useState<Balances>(() => {
     const savedBalances = localStorage.getItem('balances');
@@ -19,6 +27,14 @@ const Index = () => {
     };
   });
 
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    const savedTransactions = localStorage.getItem('transactions');
+    return savedTransactions ? JSON.parse(savedTransactions, (key, value) => {
+      if (key === 'date') return new Date(value);
+      return value;
+    }) : [];
+  });
+
   const [modalState, setModalState] = useState({
     isOpen: false,
     type: "add" as "add" | "subtract",
@@ -27,9 +43,20 @@ const Index = () => {
 
   useEffect(() => {
     localStorage.setItem('balances', JSON.stringify(balances));
-  }, [balances]);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+  }, [balances, transactions]);
 
   const handleTransaction = (amount: number) => {
+    const newTransaction: Transaction = {
+      id: crypto.randomUUID(),
+      date: new Date(),
+      amount,
+      type: modalState.type,
+      category: modalState.category as "cash" | "savings" | "investments",
+    };
+
+    setTransactions(prev => [newTransaction, ...prev]);
+    
     setBalances((prev) => ({
       ...prev,
       [modalState.category]: modalState.type === "add"
@@ -66,6 +93,7 @@ const Index = () => {
             type="cash"
             onAdd={() => openModal("add", "cash")}
             onSubtract={() => openModal("subtract", "cash")}
+            transactions={transactions.filter(t => t.category === "cash")}
           />
           <BalanceCard
             title="Savings"
@@ -73,6 +101,7 @@ const Index = () => {
             type="savings"
             onAdd={() => openModal("add", "savings")}
             onSubtract={() => openModal("subtract", "savings")}
+            transactions={transactions.filter(t => t.category === "savings")}
           />
           <BalanceCard
             title="Investments"
@@ -80,6 +109,7 @@ const Index = () => {
             type="investments"
             onAdd={() => openModal("add", "investments")}
             onSubtract={() => openModal("subtract", "investments")}
+            transactions={transactions.filter(t => t.category === "investments")}
           />
         </div>
 

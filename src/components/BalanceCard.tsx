@@ -4,6 +4,15 @@ import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
 import { useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { format } from "date-fns";
+
+interface Transaction {
+  id: string;
+  date: Date;
+  amount: number;
+  type: "add" | "subtract";
+  category: "cash" | "savings" | "investments";
+}
 
 interface BalanceCardProps {
   title: string;
@@ -11,6 +20,7 @@ interface BalanceCardProps {
   type: 'cash' | 'savings' | 'investments';
   onAdd: () => void;
   onSubtract: () => void;
+  transactions: Transaction[];
 }
 
 const getGradient = (type: string) => {
@@ -37,7 +47,7 @@ const getInterestRate = (type: string) => {
   }
 };
 
-export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceCardProps) => {
+export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, transactions }: BalanceCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -203,12 +213,22 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
         </Card>
       ) : (
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
-          <div className="h-32 mb-4 flex items-center justify-center text-gray-400">
-            <p>No projections available for cash accounts</p>
-          </div>
-          <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
-          <div className="space-y-1 text-sm text-gray-400">
-            <p className="text-center">Consider moving funds to a savings or investment account to see growth projections</p>
+          <p className="text-sm font-medium text-gray-900 mb-2">Transaction History:</p>
+          <div className="space-y-2">
+            {transactions.length > 0 ? (
+              transactions.map((transaction) => (
+                <div key={transaction.id} className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">
+                    {format(new Date(transaction.date), "MMM d, yyyy")}
+                  </span>
+                  <span className={`font-medium ${transaction.type === 'add' ? 'text-green-600' : 'text-red-600'}`}>
+                    {transaction.type === 'add' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-400">No transactions yet</p>
+            )}
           </div>
         </Card>
       )}
