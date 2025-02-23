@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
@@ -10,14 +11,16 @@ import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 
 interface Transaction {
+  id: string;
+  date: Date;
   amount: number;
-  type: "deposit" | "withdrawal";
-  category: string;
+  type: "add" | "subtract";
+  category: "cash" | "savings" | "investments";
 }
 
 interface ModalState {
   isOpen: boolean;
-  type: "deposit" | "withdrawal" | null;
+  type: "add" | "subtract" | null;
   accountId: string | null;
 }
 
@@ -51,6 +54,20 @@ const Index = () => {
         throw new Error(error.message);
       }
       return data as Account[];
+    },
+  });
+
+  const { data: transactions } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", session?.user.id);
+      if (error) {
+        throw new Error(error.message);
+      }
+      return data as Transaction[];
     },
   });
 
@@ -101,12 +118,11 @@ const Index = () => {
   };
 
   const openModal = (type: "add" | "subtract", accountId: string) => {
-    const modalType = type === "add" ? "deposit" : "withdrawal";
-    setModalState({ isOpen: true, type: modalType, accountId });
+    setModalState({ isOpen: true, type, accountId });
   };
 
   const handleTransaction = async (
-    transaction: Transaction,
+    transaction: { amount: number, type: "add" | "subtract", category: string },
     accountId: string | null
   ) => {
     if (!accountId) {
@@ -213,13 +229,35 @@ const Index = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {accounts?.map((account) => (
-          <BalanceCard
-            key={account.id}
-            account={account}
-            onTransaction={openModal}
-            onNameChange={handleNameChange}
-            onBalanceChange={handleBalanceChange}
-          />
+          <div key={account.id} className="flex gap-4">
+            <BalanceCard
+              key={account.id}
+              account={account}
+              type="cash"
+              onTransaction={openModal}
+              onNameChange={handleNameChange}
+              onBalanceChange={handleBalanceChange}
+              transactions={transactions?.filter(t => t.account_id === account.id && t.category === 'cash') ?? []}
+            />
+            <BalanceCard
+              key={`${account.id}-savings`}
+              account={account}
+              type="savings"
+              onTransaction={openModal}
+              onNameChange={handleNameChange}
+              onBalanceChange={handleBalanceChange}
+              transactions={transactions?.filter(t => t.account_id === account.id && t.category === 'savings') ?? []}
+            />
+            <BalanceCard
+              key={`${account.id}-investments`}
+              account={account}
+              type="investments"
+              onTransaction={openModal}
+              onNameChange={handleNameChange}
+              onBalanceChange={handleBalanceChange}
+              transactions={transactions?.filter(t => t.account_id === account.id && t.category === 'investments') ?? []}
+            />
+          </div>
         ))}
         <button
           onClick={() => addAccountMutation.mutate()}

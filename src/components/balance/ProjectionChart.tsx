@@ -5,7 +5,7 @@ import { formatCurrency } from "@/utils/format";
 
 interface ProjectionChartProps {
   chartData: Array<{ name: string; value: number }>;
-  type: 'savings' | 'investments';
+  type: 'cash' | 'savings' | 'investments';
   projections: {
     twoWeeks: number;
     thirtyDays: number;
