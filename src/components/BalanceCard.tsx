@@ -221,7 +221,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                           <text
                             x={props.cx - 10}
                             y={props.cy}
-                            dy={-8}
+                            dy={4}
                             fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                             fontSize={12}
                             fontWeight="500"
