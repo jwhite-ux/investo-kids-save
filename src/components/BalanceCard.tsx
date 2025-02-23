@@ -1,8 +1,8 @@
-
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
 import { useRef } from "react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface BalanceCardProps {
   title: string;
@@ -67,6 +67,28 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
     fiveYears: calculateProjectedBalance(amount, annualRate, 1825),
   } : null;
 
+  const chartData = projections ? [
+    { name: 'Now', value: amount },
+    { name: '2w', value: projections.twoWeeks },
+    { name: '30d', value: projections.thirtyDays },
+    { name: '6m', value: projections.sixMonths },
+    { name: '1y', value: projections.oneYear },
+    { name: '5y', value: projections.fiveYears },
+  ] : [];
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/90 backdrop-blur-sm p-2 rounded shadow-lg border border-gray-200">
+          <p className="text-sm font-medium text-gray-900">
+            {formatCurrency(payload[0].value)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="flex flex-col space-y-4">
       <Card 
@@ -126,6 +148,31 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
 
       {projections && amount > 0 && (
         <Card className="p-4 bg-white/50 backdrop-blur-sm">
+          <div className="h-32 mb-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  hide
+                  domain={['dataMin', 'dataMax']}
+                />
+                <Tooltip content={<CustomTooltip />} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          
           <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
           <div className="space-y-1 text-sm text-gray-600">
             <div className="flex justify-between">
