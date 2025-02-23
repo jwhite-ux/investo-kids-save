@@ -1,8 +1,7 @@
-
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns";
 
@@ -20,6 +19,7 @@ interface BalanceCardProps {
   type: 'cash' | 'savings' | 'investments';
   onAdd: () => void;
   onSubtract: () => void;
+  onBalanceChange: (newAmount: number) => void;
   transactions: Transaction[];
 }
 
@@ -47,7 +47,7 @@ const getInterestRate = (type: string) => {
   }
 };
 
-export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, transactions }: BalanceCardProps) => {
+export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceChange, transactions }: BalanceCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -100,6 +100,35 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, transactio
     return null;
   };
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(amount.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleStartEdit = () => {
+    setEditValue(amount.toString());
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const handleFinishEdit = () => {
+    const newAmount = parseFloat(editValue);
+    if (!isNaN(newAmount) && newAmount >= 0) {
+      onBalanceChange(newAmount);
+    } else {
+      setEditValue(amount.toString());
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleFinishEdit();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setEditValue(amount.toString());
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-4 h-full">
       <Card 
@@ -139,9 +168,24 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, transactio
             key={amount}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold text-white"
+            className="text-3xl font-bold text-white cursor-pointer"
+            onClick={handleStartEdit}
           >
-            {formatCurrency(amount)}
+            {isEditing ? (
+              <input
+                ref={inputRef}
+                type="number"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={handleFinishEdit}
+                onKeyDown={handleKeyDown}
+                className="bg-transparent border-none p-0 text-3xl font-bold text-white w-full focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                step="0.01"
+                min="0"
+              />
+            ) : (
+              formatCurrency(amount)
+            )}
           </motion.div>
           <div className="flex space-x-2">
             <button

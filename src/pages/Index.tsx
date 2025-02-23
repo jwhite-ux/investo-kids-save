@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
@@ -114,6 +113,35 @@ const Index = () => {
     }));
   };
 
+  const handleBalanceChange = (accountId: string, category: keyof AccountBalances, newAmount: number) => {
+    setAccounts(prev => prev.map(account => {
+      if (account.id === accountId) {
+        const oldAmount = account.balances[category];
+        const difference = newAmount - oldAmount;
+        
+        const newTransaction: Transaction = {
+          id: crypto.randomUUID(),
+          date: new Date(),
+          amount: Math.abs(difference),
+          type: difference >= 0 ? "add" : "subtract",
+          category,
+          accountId,
+        };
+        
+        setTransactions(prev => [newTransaction, ...prev]);
+
+        return {
+          ...account,
+          balances: {
+            ...account.balances,
+            [category]: newAmount
+          }
+        };
+      }
+      return account;
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
       <div className="mx-auto max-w-7xl">
@@ -155,6 +183,7 @@ const Index = () => {
                   type="cash"
                   onAdd={() => openModal("add", "cash", account.id)}
                   onSubtract={() => openModal("subtract", "cash", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "cash", newAmount)}
                   transactions={transactions.filter(t => t.category === "cash" && t.accountId === account.id)}
                 />
                 <BalanceCard
@@ -163,6 +192,7 @@ const Index = () => {
                   type="savings"
                   onAdd={() => openModal("add", "savings", account.id)}
                   onSubtract={() => openModal("subtract", "savings", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "savings", newAmount)}
                   transactions={transactions.filter(t => t.category === "savings" && t.accountId === account.id)}
                 />
                 <BalanceCard
@@ -171,6 +201,7 @@ const Index = () => {
                   type="investments"
                   onAdd={() => openModal("add", "investments", account.id)}
                   onSubtract={() => openModal("subtract", "investments", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "investments", newAmount)}
                   transactions={transactions.filter(t => t.category === "investments" && t.accountId === account.id)}
                 />
               </div>
