@@ -68,72 +68,74 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
   } : null;
 
   return (
-    <Card 
-      ref={cardRef}
-      className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6 relative overflow-hidden`}
-      onMouseMove={handleMouseMove}
-    >
-      {type === 'cash' && (
-        <motion.div
-          className="pointer-events-none absolute -inset-px opacity-50"
-          style={{
-            background: "radial-gradient(circle 150px at var(--x) var(--y), rgba(255,255,255,0.5), transparent 60%)",
-            WebkitMaskImage: "radial-gradient(circle 150px at var(--x) var(--y), white, transparent)",
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-          animate={{
-            '--x': followX,
-            '--y': followY,
-          } as any}
-        />
-      )}
-      <div className="flex flex-col space-y-4">
-        <div className="space-y-1">
-          <h3 className="text-lg font-medium text-white/90">{title}</h3>
-          {interestRate && (
-            <p className="text-sm font-medium text-white/75">{interestRate}</p>
-          )}
-        </div>
-        <motion.div
-          key={amount}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold text-white"
-        >
-          {formatCurrency(amount)}
-        </motion.div>
-        <div className="flex space-x-2">
-          <button
-            onClick={onAdd}
-            className="rounded bg-white/20 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/30"
-          >
-            Add
-          </button>
-          <button
-            onClick={onSubtract}
-            className="rounded bg-white/20 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/30"
-          >
-            Subtract
-          </button>
-        </div>
-
-        {projections && amount > 0 && (
-          <div className="mt-4 space-y-2 border-t border-white/20 pt-4">
-            <p className="text-sm font-medium text-white/90">Projected Balance:</p>
-            <div className="space-y-1 text-sm text-white/75">
-              <p>2 Weeks: {formatCurrency(projections.twoWeeks)}</p>
-              <p>30 Days: {formatCurrency(projections.thirtyDays)}</p>
-              <p>6 Months: {formatCurrency(projections.sixMonths)}</p>
-              <p>1 Year: {formatCurrency(projections.oneYear)}</p>
-              <p>5 Years: {formatCurrency(projections.fiveYears)}</p>
-            </div>
-          </div>
+    <div className="flex flex-col space-y-4">
+      <Card 
+        ref={cardRef}
+        className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6 relative overflow-hidden`}
+        onMouseMove={handleMouseMove}
+      >
+        {type === 'cash' && (
+          <motion.div
+            className="pointer-events-none absolute -inset-px opacity-50"
+            style={{
+              background: "radial-gradient(circle 150px at var(--x) var(--y), rgba(255,255,255,0.5), transparent 60%)",
+              WebkitMaskImage: "radial-gradient(circle 150px at var(--x) var(--y), white, transparent)",
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            animate={{
+              '--x': followX,
+              '--y': followY,
+            } as any}
+          />
         )}
-      </div>
-    </Card>
+        <div className="flex flex-col space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-lg font-medium text-white/90">{title}</h3>
+            {interestRate && (
+              <p className="text-sm font-medium text-white/75">{interestRate}</p>
+            )}
+          </div>
+          <motion.div
+            key={amount}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl font-bold text-white"
+          >
+            {formatCurrency(amount)}
+          </motion.div>
+          <div className="flex space-x-2">
+            <button
+              onClick={onAdd}
+              className="rounded bg-white/20 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/30"
+            >
+              Add
+            </button>
+            <button
+              onClick={onSubtract}
+              className="rounded bg-white/20 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/30"
+            >
+              Subtract
+            </button>
+          </div>
+        </div>
+      </Card>
+
+      {projections && amount > 0 && (
+        <Card className="p-4 bg-white/50 backdrop-blur-sm">
+          <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
+          <div className="space-y-1 text-sm text-gray-600">
+            <p>2 Weeks: {formatCurrency(projections.twoWeeks)}</p>
+            <p>30 Days: {formatCurrency(projections.thirtyDays)}</p>
+            <p>6 Months: {formatCurrency(projections.sixMonths)}</p>
+            <p>1 Year: {formatCurrency(projections.oneYear)}</p>
+            <p>5 Years: {formatCurrency(projections.fiveYears)}</p>
+          </div>
+        </Card>
+      )}
+    </div>
   );
 };
