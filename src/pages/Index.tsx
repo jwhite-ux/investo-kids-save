@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
@@ -10,13 +9,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 
-interface Transaction {
+interface DBTransaction {
   id: string;
   account_id: string;
   amount: number;
   type: string;
   category: string;
   created_at: string;
+}
+
+interface Transaction {
+  id: string;
+  date: Date;
+  amount: number;
+  type: "add" | "subtract";
+  category: "cash" | "savings" | "investments";
 }
 
 interface ModalState {
@@ -58,7 +65,7 @@ const Index = () => {
     },
   });
 
-  const { data: transactions } = useQuery({
+  const { data: dbTransactions } = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -68,9 +75,17 @@ const Index = () => {
       if (error) {
         throw new Error(error.message);
       }
-      return (data || []) as Transaction[];
+      return (data || []) as DBTransaction[];
     },
   });
+
+  const transactions: Transaction[] = (dbTransactions || []).map(t => ({
+    id: t.id,
+    date: new Date(t.created_at),
+    amount: t.amount,
+    type: t.type as "add" | "subtract",
+    category: t.category as "cash" | "savings" | "investments"
+  }));
 
   const addAccountMutation = useMutation({
     mutationFn: async () => {
@@ -234,7 +249,7 @@ const Index = () => {
               onTransaction={openModal}
               onNameChange={handleNameChange}
               onBalanceChange={handleBalanceChange}
-              transactions={transactions?.filter(t => t.account_id === account.id && t.category === 'cash') ?? []}
+              transactions={transactions.filter(t => t.category === 'cash')}
             />
             <BalanceCard
               key={`${account.id}-savings`}
@@ -243,7 +258,7 @@ const Index = () => {
               onTransaction={openModal}
               onNameChange={handleNameChange}
               onBalanceChange={handleBalanceChange}
-              transactions={transactions?.filter(t => t.account_id === account.id && t.category === 'savings') ?? []}
+              transactions={transactions.filter(t => t.category === 'savings')}
             />
             <BalanceCard
               key={`${account.id}-investments`}
@@ -252,7 +267,7 @@ const Index = () => {
               onTransaction={openModal}
               onNameChange={handleNameChange}
               onBalanceChange={handleBalanceChange}
-              transactions={transactions?.filter(t => t.account_id === account.id && t.category === 'investments') ?? []}
+              transactions={transactions.filter(t => t.category === 'investments')}
             />
           </div>
         ))}
