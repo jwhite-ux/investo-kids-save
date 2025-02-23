@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
@@ -16,6 +17,7 @@ interface DBTransaction {
   type: string;
   category: string;
   created_at: string;
+  user_id: string;
 }
 
 interface Transaction {
@@ -38,6 +40,7 @@ interface Account {
   cash_balance: number;
   savings_balance: number;
   investments_balance: number;
+  user_id: string;
 }
 
 const Index = () => {
@@ -51,35 +54,35 @@ const Index = () => {
   const { session } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: accounts } = useQuery({
+  const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
+      if (!session?.user.id) return [];
       const { data, error } = await supabase
         .from("kids_accounts")
         .select("*")
-        .eq("user_id", session?.user.id);
-      if (error) {
-        throw new Error(error.message);
-      }
+        .eq("user_id", session.user.id);
+      if (error) throw error;
       return data as Account[];
     },
+    enabled: !!session?.user.id,
   });
 
-  const { data: dbTransactions } = useQuery({
+  const { data: dbTransactions = [] } = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
+      if (!session?.user.id) return [];
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .eq("user_id", session?.user.id);
-      if (error) {
-        throw new Error(error.message);
-      }
-      return (data || []) as DBTransaction[];
+        .eq("user_id", session.user.id);
+      if (error) throw error;
+      return data as DBTransaction[];
     },
+    enabled: !!session?.user.id,
   });
 
-  const transactions: Transaction[] = (dbTransactions || []).map(t => ({
+  const transactions = dbTransactions.map(t => ({
     id: t.id,
     date: new Date(t.created_at),
     amount: t.amount,
@@ -138,7 +141,7 @@ const Index = () => {
   };
 
   const handleTransaction = async (amount: number) => {
-    if (!modalState.accountId || !modalState.type) {
+    if (!modalState.accountId || !modalState.type || !session?.user.id) {
       toast({
         title: "Error",
         description: "Invalid transaction parameters",
@@ -149,6 +152,7 @@ const Index = () => {
 
     const { error } = await supabase.from("transactions").insert([
       {
+        user_id: session.user.id,
         account_id: modalState.accountId,
         amount,
         type: modalState.type,
@@ -240,7 +244,7 @@ const Index = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {accounts?.map((account) => (
+        {accounts.map((account) => (
           <div key={account.id} className="flex gap-4">
             <BalanceCard
               key={account.id}
