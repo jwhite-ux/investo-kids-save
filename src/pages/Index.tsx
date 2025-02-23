@@ -1,13 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
 
 const Index = () => {
-  const [balances, setBalances] = useState({
-    cash: 0,
-    savings: 0,
-    investments: 0,
+  const [balances, setBalances] = useState(() => {
+    const savedBalances = localStorage.getItem('balances');
+    return savedBalances ? JSON.parse(savedBalances) : {
+      cash: 0,
+      savings: 0,
+      investments: 0,
+    };
   });
 
   const [modalState, setModalState] = useState({
@@ -15,6 +18,10 @@ const Index = () => {
     type: "add" as "add" | "subtract",
     category: "",
   });
+
+  useEffect(() => {
+    localStorage.setItem('balances', JSON.stringify(balances));
+  }, [balances]);
 
   const handleTransaction = (amount: number) => {
     setBalances((prev) => ({
