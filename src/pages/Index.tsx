@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
@@ -77,8 +78,8 @@ const Index = () => {
         id: t.id,
         date: new Date(t.created_at),
         amount: Number(t.amount),
-        type: t.type,
-        category: t.category,
+        type: t.type as "add" | "subtract",
+        category: t.category as "cash" | "savings" | "investments",
         accountId: t.account_id,
       }));
     },
