@@ -208,7 +208,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
           <div className="h-32 mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ right: 65 }}>
+              <LineChart data={chartData} margin={{ right: 65, top: 10, bottom: 5 }}>
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -229,7 +229,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                           <text
                             x={props.cx + 10}
                             y={props.cy}
-                            dy={4}
+                            dy={-8}
                             fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                             fontSize={12}
                             fontWeight="500"
