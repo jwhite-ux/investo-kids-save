@@ -4,13 +4,13 @@ import { formatCurrency } from "@/utils/format";
 import { useRef, useState } from "react";
 
 interface BalanceDisplayProps {
-  amount: number;
+  amount?: number;
   onBalanceChange: (newAmount: number) => void;
   onAdd: () => void;
   onSubtract: () => void;
 }
 
-export const BalanceDisplay = ({ amount, onBalanceChange, onAdd, onSubtract }: BalanceDisplayProps) => {
+export const BalanceDisplay = ({ amount = 0, onBalanceChange, onAdd, onSubtract }: BalanceDisplayProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(amount.toString());
   const inputRef = useRef<HTMLInputElement>(null);

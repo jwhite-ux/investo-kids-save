@@ -12,10 +12,10 @@ interface Transaction {
 }
 
 interface TransactionHistoryProps {
-  transactions: Transaction[];
+  transactions?: Transaction[];
 }
 
-export const TransactionHistory = ({ transactions }: TransactionHistoryProps) => {
+export const TransactionHistory = ({ transactions = [] }: TransactionHistoryProps) => {
   return (
     <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
       <p className="text-sm font-medium text-gray-900 mb-2">Transaction History:</p>
