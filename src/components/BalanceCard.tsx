@@ -1,3 +1,4 @@
+
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -39,18 +40,26 @@ const getGradient = (type: string) => {
 const getInterestRate = (type: string) => {
   switch (type) {
     case 'savings':
-      return '4.5% APY';
+      return 4.5;
     case 'investments':
-      return '8-12% avg. return';
+      return 10;
     default:
       return null;
   }
+};
+
+const formatInterestRate = (rate: number | null, type: string) => {
+  if (rate === null) return null;
+  return type === 'savings' ? `${rate}% APY` : `${rate}% avg. return`;
 };
 
 export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceChange, transactions }: BalanceCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  const [isEditingRate, setIsEditingRate] = useState(false);
+  const [interestRateValue, setInterestRateValue] = useState(getInterestRate(type));
+  const rateInputRef = useRef<HTMLInputElement>(null);
 
   const springConfig = { damping: 25, stiffness: 700 };
   const followX = useSpring(mouseX, springConfig);
@@ -67,8 +76,35 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     mouseY.set(y);
   };
 
-  const interestRate = getInterestRate(type);
-  const annualRate = getAnnualRate(type);
+  const handleStartEditRate = () => {
+    if (type === 'cash') return;
+    setIsEditingRate(true);
+    setTimeout(() => rateInputRef.current?.focus(), 0);
+  };
+
+  const handleFinishEditRate = () => {
+    if (interestRateValue !== null) {
+      const newRate = parseFloat(interestRateValue.toString());
+      if (!isNaN(newRate) && newRate >= 0 && newRate <= 100) {
+        setInterestRateValue(newRate);
+      } else {
+        setInterestRateValue(getInterestRate(type));
+      }
+    }
+    setIsEditingRate(false);
+  };
+
+  const handleRateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleFinishEditRate();
+    } else if (e.key === 'Escape') {
+      setIsEditingRate(false);
+      setInterestRateValue(getInterestRate(type));
+    }
+  };
+
+  const formattedInterestRate = formatInterestRate(interestRateValue, type);
+  const annualRate = interestRateValue ? interestRateValue / 100 : getAnnualRate(type);
 
   const projections = type !== 'cash' ? {
     twoWeeks: calculateProjectedBalance(amount, annualRate, 14),
@@ -157,10 +193,29 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         <div className="flex flex-col space-y-4">
           <div className="space-y-1">
             <h3 className="text-lg font-medium text-white/90">{title}</h3>
-            {interestRate && (
-              <p className="text-sm font-medium text-white/75">{interestRate}</p>
-            )}
-            {!interestRate && (
+            {formattedInterestRate ? (
+              <p 
+                className="text-sm font-medium text-white/75 cursor-pointer"
+                onClick={handleStartEditRate}
+              >
+                {isEditingRate ? (
+                  <input
+                    ref={rateInputRef}
+                    type="number"
+                    value={interestRateValue}
+                    onChange={(e) => setInterestRateValue(parseFloat(e.target.value))}
+                    onBlur={handleFinishEditRate}
+                    onKeyDown={handleRateKeyDown}
+                    className="bg-transparent border-none p-0 text-sm font-medium text-white w-24 focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                  />
+                ) : (
+                  formattedInterestRate
+                )}
+              </p>
+            ) : (
               <p className="text-sm font-medium text-white/75">&nbsp;</p>
             )}
           </div>
