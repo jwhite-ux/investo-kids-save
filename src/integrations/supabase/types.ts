@@ -9,7 +9,100 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      kids_accounts: {
+        Row: {
+          cash_balance: number
+          created_at: string | null
+          id: string
+          investments_balance: number
+          name: string
+          savings_balance: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cash_balance?: number
+          created_at?: string | null
+          id?: string
+          investments_balance?: number
+          name: string
+          savings_balance?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cash_balance?: number
+          created_at?: string | null
+          id?: string
+          investments_balance?: number
+          name?: string
+          savings_balance?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kids_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category: string
+          created_at: string | null
+          id: string
+          type: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category: string
+          created_at?: string | null
+          id?: string
+          type: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category?: string
+          created_at?: string | null
+          id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "kids_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

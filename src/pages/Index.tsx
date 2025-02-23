@@ -1,8 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
-import { Plus } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Plus, LogOut } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface AccountBalances {
   cash: number;
@@ -26,27 +30,6 @@ interface Transaction {
 }
 
 const Index = () => {
-  const [accounts, setAccounts] = useState<KidsAccount[]>(() => {
-    const savedAccounts = localStorage.getItem('accounts');
-    return savedAccounts ? JSON.parse(savedAccounts) : [{
-      id: crypto.randomUUID(),
-      name: "Kid's Account",
-      balances: {
-        cash: 0,
-        savings: 0,
-        investments: 0,
-      }
-    }];
-  });
-
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const savedTransactions = localStorage.getItem('transactions');
-    return savedTransactions ? JSON.parse(savedTransactions, (key, value) => {
-      if (key === 'date') return new Date(value);
-      return value;
-    }) : [];
-  });
-
   const [modalState, setModalState] = useState({
     isOpen: false,
     type: "add" as "add" | "subtract",
@@ -54,92 +37,162 @@ const Index = () => {
     accountId: "",
   });
 
-  useEffect(() => {
-    localStorage.setItem('accounts', JSON.stringify(accounts));
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [accounts, transactions]);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("kids_accounts")
+        .select("*");
+      
+      if (error) throw error;
+      
+      return data.map(account => ({
+        id: account.id,
+        name: account.name,
+        balances: {
+          cash: Number(account.cash_balance),
+          savings: Number(account.savings_balance),
+          investments: Number(account.investments_balance),
+        }
+      }));
+    },
+  });
+
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      
+      return data.map(t => ({
+        id: t.id,
+        date: new Date(t.created_at),
+        amount: Number(t.amount),
+        type: t.type,
+        category: t.category,
+        accountId: t.account_id,
+      }));
+    },
+  });
+
+  const addAccountMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from("kids_accounts")
+        .insert([
+          {
+            name: `Kid's Account ${accounts.length + 1}`,
+            cash_balance: 0,
+            savings_balance: 0,
+            investments_balance: 0,
+          }
+        ])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      toast({
+        title: "Success",
+        description: "Account created successfully",
+      });
+    },
+  });
+
+  const updateAccountMutation = useMutation({
+    mutationFn: async ({ accountId, name, category, newAmount }: any) => {
+      const { error } = await supabase
+        .from("kids_accounts")
+        .update({
+          name: name,
+          [`${category}_balance`]: newAmount,
+        })
+        .eq("id", accountId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+  });
+
+  const addTransactionMutation = useMutation({
+    mutationFn: async ({ amount, type, category, accountId }: any) => {
+      const { error: transactionError } = await supabase
+        .from("transactions")
+        .insert([
+          {
+            amount,
+            type,
+            category,
+            account_id: accountId,
+          }
+        ]);
+      
+      if (transactionError) throw transactionError;
+
+      const accountToUpdate = accounts.find(a => a.id === accountId);
+      if (!accountToUpdate) throw new Error("Account not found");
+
+      const newAmount = type === "add"
+        ? accountToUpdate.balances[category as keyof AccountBalances] + amount
+        : accountToUpdate.balances[category as keyof AccountBalances] - amount;
+
+      const { error: accountError } = await supabase
+        .from("kids_accounts")
+        .update({
+          [`${category}_balance`]: newAmount,
+        })
+        .eq("id", accountId);
+      
+      if (accountError) throw accountError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast({
+        title: "Success",
+        description: "Transaction added successfully",
+      });
+    },
+  });
 
   const handleTransaction = (amount: number) => {
-    const newTransaction: Transaction = {
-      id: crypto.randomUUID(),
-      date: new Date(),
+    addTransactionMutation.mutate({
       amount,
       type: modalState.type,
-      category: modalState.category as "cash" | "savings" | "investments",
+      category: modalState.category,
       accountId: modalState.accountId,
-    };
-
-    setTransactions(prev => [newTransaction, ...prev]);
-    
-    setAccounts(prev => prev.map(account => {
-      if (account.id === modalState.accountId) {
-        return {
-          ...account,
-          balances: {
-            ...account.balances,
-            [modalState.category]: modalState.type === "add"
-              ? account.balances[modalState.category as keyof AccountBalances] + amount
-              : account.balances[modalState.category as keyof AccountBalances] - amount,
-          }
-        };
-      }
-      return account;
-    }));
+    });
+    setModalState({ ...modalState, isOpen: false });
   };
 
   const openModal = (type: "add" | "subtract", category: string, accountId: string) => {
     setModalState({ isOpen: true, type, category, accountId });
   };
 
-  const addNewAccount = () => {
-    const newAccount: KidsAccount = {
-      id: crypto.randomUUID(),
-      name: `Kid's Account ${accounts.length + 1}`,
-      balances: {
-        cash: 0,
-        savings: 0,
-        investments: 0,
-      }
-    };
-    setAccounts(prev => [...prev, newAccount]);
-  };
-
   const handleNameChange = (accountId: string, newName: string) => {
-    setAccounts(prev => prev.map(account => {
-      if (account.id === accountId) {
-        return { ...account, name: newName };
-      }
-      return account;
-    }));
+    updateAccountMutation.mutate({ accountId, name: newName });
   };
 
   const handleBalanceChange = (accountId: string, category: keyof AccountBalances, newAmount: number) => {
-    setAccounts(prev => prev.map(account => {
-      if (account.id === accountId) {
-        const oldAmount = account.balances[category];
-        const difference = newAmount - oldAmount;
-        
-        const newTransaction: Transaction = {
-          id: crypto.randomUUID(),
-          date: new Date(),
-          amount: Math.abs(difference),
-          type: difference >= 0 ? "add" : "subtract",
-          category,
-          accountId,
-        };
-        
-        setTransactions(prev => [newTransaction, ...prev]);
+    updateAccountMutation.mutate({ accountId, category, newAmount });
+  };
 
-        return {
-          ...account,
-          balances: {
-            ...account.balances,
-            [category]: newAmount
-          }
-        };
-      }
-      return account;
-    }));
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
   };
 
   return (
@@ -149,13 +202,22 @@ const Index = () => {
           <h1 className="text-4xl font-bold tracking-tight text-gray-900">
             Invest.Kids
           </h1>
-          <button
-            onClick={addNewAccount}
-            className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Add Account
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => addAccountMutation.mutate()}
+              className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add Account
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
         </div>
 
         <div className="space-y-8">
