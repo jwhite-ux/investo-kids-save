@@ -58,7 +58,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const [isEditingRate, setIsEditingRate] = useState(false);
-  const [interestRateValue, setInterestRateValue] = useState(getInterestRate(type));
+  const [interestRateValue, setInterestRateValue] = useState<number | null>(getInterestRate(type));
   const rateInputRef = useRef<HTMLInputElement>(null);
 
   const springConfig = { damping: 25, stiffness: 700 };
@@ -104,7 +104,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   };
 
   const formattedInterestRate = formatInterestRate(interestRateValue, type);
-  const annualRate = interestRateValue ? interestRateValue / 100 : getAnnualRate(type);
+  const annualRate = interestRateValue !== null ? interestRateValue / 100 : getAnnualRate(type);
 
   const projections = type !== 'cash' ? {
     twoWeeks: calculateProjectedBalance(amount, annualRate, 14),
@@ -202,8 +202,8 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   <input
                     ref={rateInputRef}
                     type="number"
-                    value={interestRateValue}
-                    onChange={(e) => setInterestRateValue(parseFloat(e.target.value))}
+                    value={interestRateValue || ''}
+                    onChange={(e) => setInterestRateValue(e.target.value ? parseFloat(e.target.value) : null)}
                     onBlur={handleFinishEditRate}
                     onKeyDown={handleRateKeyDown}
                     className="bg-transparent border-none p-0 text-sm font-medium text-white w-24 focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
