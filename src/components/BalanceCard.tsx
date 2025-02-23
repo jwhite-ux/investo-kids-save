@@ -208,7 +208,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
           <div className="h-32 mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <LineChart data={chartData} margin={{ right: 65 }}>
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -217,14 +217,27 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   dot={(props: any) => {
                     if (props.payload.name === '5y') {
                       return (
-                        <circle
-                          cx={props.cx}
-                          cy={props.cy}
-                          r={4}
-                          fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
-                          stroke="white"
-                          strokeWidth={2}
-                        />
+                        <>
+                          <circle
+                            cx={props.cx}
+                            cy={props.cy}
+                            r={4}
+                            fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
+                            stroke="white"
+                            strokeWidth={2}
+                          />
+                          <text
+                            x={props.cx + 10}
+                            y={props.cy}
+                            dy={4}
+                            fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
+                            fontSize={12}
+                            fontWeight="500"
+                            textAnchor="start"
+                          >
+                            {formatCurrency(props.payload.value)}
+                          </text>
+                        </>
                       );
                     }
                     return null;
