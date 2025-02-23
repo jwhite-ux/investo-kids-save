@@ -1,7 +1,8 @@
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency } from "../utils/format";
+import { useRef } from "react";
 
 interface BalanceCardProps {
   title: string;
@@ -25,8 +26,42 @@ const getGradient = (type: string) => {
 };
 
 export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 700 };
+  const followX = useSpring(mouseX, springConfig);
+  const followY = useSpring(mouseY, springConfig);
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current || type !== 'cash') return;
+
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
   return (
-    <Card className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6`}>
+    <Card 
+      ref={cardRef}
+      className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6 relative overflow-hidden`}
+      onMouseMove={handleMouseMove}
+    >
+      {type === 'cash' && (
+        <motion.div
+          className="pointer-events-none absolute -inset-px opacity-50"
+          style={{
+            background: "radial-gradient(circle 100px at var(--x) var(--y), rgba(255,255,255,0.4), transparent 40%)",
+            WebkitMaskImage: "radial-gradient(circle 150px at var(--x) var(--y), white, transparent)",
+            "--x": followX,
+            "--y": followY,
+          } as any}
+        />
+      )}
       <div className="flex flex-col space-y-4">
         <h3 className="text-lg font-medium text-white/90">{title}</h3>
         <motion.div
