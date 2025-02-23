@@ -26,7 +26,7 @@ const getGradient = (type: string) => {
 
 export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceCardProps) => {
   return (
-    <Card className="balance-card bg-gradient-to-br p-6">
+    <Card className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6`}>
       <div className="flex flex-col space-y-4">
         <h3 className="text-lg font-medium text-white/90">{title}</h3>
         <motion.div
