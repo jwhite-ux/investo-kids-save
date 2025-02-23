@@ -128,11 +128,26 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
         <Card className="p-4 bg-white/50 backdrop-blur-sm">
           <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
           <div className="space-y-1 text-sm text-gray-600">
-            <p>2 Weeks: {formatCurrency(projections.twoWeeks)}</p>
-            <p>30 Days: {formatCurrency(projections.thirtyDays)}</p>
-            <p>6 Months: {formatCurrency(projections.sixMonths)}</p>
-            <p>1 Year: {formatCurrency(projections.oneYear)}</p>
-            <p>5 Years: {formatCurrency(projections.fiveYears)}</p>
+            <div className="flex justify-between">
+              <span>2 Weeks:</span>
+              <span className="font-medium">{formatCurrency(projections.twoWeeks)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>30 Days:</span>
+              <span className="font-medium">{formatCurrency(projections.thirtyDays)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>6 Months:</span>
+              <span className="font-medium">{formatCurrency(projections.sixMonths)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>1 Year:</span>
+              <span className="font-medium">{formatCurrency(projections.oneYear)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>5 Years:</span>
+              <span className="font-medium">{formatCurrency(projections.fiveYears)}</span>
+            </div>
           </div>
         </Card>
       )}
