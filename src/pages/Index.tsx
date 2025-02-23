@@ -100,8 +100,9 @@ const Index = () => {
     }
   };
 
-  const openModal = (type: "deposit" | "withdrawal", accountId: string) => {
-    setModalState({ isOpen: true, type, accountId });
+  const openModal = (type: "add" | "subtract", accountId: string) => {
+    const modalType = type === "add" ? "deposit" : "withdrawal";
+    setModalState({ isOpen: true, type: modalType, accountId });
   };
 
   const handleTransaction = async (
@@ -199,17 +200,11 @@ const Index = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Kids Money Manager</h1>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/profile")}
-          >
+          <Button variant="outline" onClick={() => navigate("/profile")}>
             <UserCircle className="mr-2" />
             Profile
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-          >
+          <Button variant="outline" onClick={handleLogout}>
             <LogOut className="mr-2" />
             Logout
           </Button>
@@ -240,6 +235,7 @@ const Index = () => {
         onClose={() => setModalState({ ...modalState, isOpen: false })}
         onSubmit={handleTransaction}
         type={modalState.type}
+        accountId={modalState.accountId}
       />
     </div>
   );

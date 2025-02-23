@@ -1,4 +1,3 @@
-
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -15,13 +14,16 @@ interface Transaction {
 }
 
 interface BalanceCardProps {
-  title: string;
-  amount: number;
-  type: 'cash' | 'savings' | 'investments';
-  onAdd: () => void;
-  onSubtract: () => void;
-  onBalanceChange: (newAmount: number) => void;
-  transactions: Transaction[];
+  account: {
+    id: string;
+    name: string;
+    cash_balance: number;
+    savings_balance: number;
+    investments_balance: number;
+  };
+  onTransaction: (type: "add" | "subtract", accountId: string) => void;
+  onNameChange: (accountId: string, newName: string) => void;
+  onBalanceChange: (accountId: string, balanceType: string, newAmount: number) => void;
 }
 
 const getGradient = (type: string) => {
@@ -53,13 +55,16 @@ const formatInterestRate = (rate: number | null, type: string) => {
   return type === 'savings' ? `${rate}% APY` : `${rate}% avg. return`;
 };
 
-export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceChange, transactions }: BalanceCardProps) => {
+export const BalanceCard = ({ account, onTransaction, onNameChange, onBalanceChange }: BalanceCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const [isEditingRate, setIsEditingRate] = useState(false);
   const [interestRateValue, setInterestRateValue] = useState<number | null>(getInterestRate(type));
   const rateInputRef = useRef<HTMLInputElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(account.cash_balance.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const springConfig = { damping: 25, stiffness: 700 };
   const followX = useSpring(mouseX, springConfig);
@@ -149,9 +154,9 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   const handleFinishEdit = () => {
     const newAmount = parseFloat(editValue);
     if (!isNaN(newAmount) && newAmount >= 0) {
-      onBalanceChange(newAmount);
+      onBalanceChange(account.id, `${type}_balance`, newAmount);
     } else {
-      setEditValue(amount.toString());
+      setEditValue(account[`${type}_balance`].toString());
     }
     setIsEditing(false);
   };
