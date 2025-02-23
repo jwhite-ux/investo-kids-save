@@ -3,8 +3,14 @@ import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
 
+interface Balances {
+  cash: number;
+  savings: number;
+  investments: number;
+}
+
 const Index = () => {
-  const [balances, setBalances] = useState(() => {
+  const [balances, setBalances] = useState<Balances>(() => {
     const savedBalances = localStorage.getItem('balances');
     return savedBalances ? JSON.parse(savedBalances) : {
       cash: 0,
