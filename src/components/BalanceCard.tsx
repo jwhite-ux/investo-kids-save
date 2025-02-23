@@ -214,7 +214,21 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   dataKey="value"
                   stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                   strokeWidth={2}
-                  dot={false}
+                  dot={(props: any) => {
+                    if (props.payload.name === '5y') {
+                      return (
+                        <circle
+                          cx={props.cx}
+                          cy={props.cy}
+                          r={4}
+                          fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
+                          stroke="white"
+                          strokeWidth={2}
+                        />
+                      );
+                    }
+                    return null;
+                  }}
                 />
                 <XAxis
                   dataKey="name"
