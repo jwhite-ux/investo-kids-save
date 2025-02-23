@@ -55,13 +55,18 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
         <motion.div
           className="pointer-events-none absolute -inset-px opacity-50"
           style={{
-            background: `radial-gradient(circle 150px at ${followX.get()}px ${followY.get()}px, rgba(255,255,255,0.5), transparent 60%)`,
+            background: "radial-gradient(circle 150px at var(--x) var(--y), rgba(255,255,255,0.5), transparent 60%)",
+            WebkitMaskImage: "radial-gradient(circle 150px at var(--x) var(--y), white, transparent)",
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
           }}
+          animate={{
+            '--x': followX,
+            '--y': followY,
+          } as any}
         />
       )}
       <div className="flex flex-col space-y-4">
