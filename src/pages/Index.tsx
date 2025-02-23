@@ -12,10 +12,11 @@ import { Button } from "@/components/ui/button";
 
 interface Transaction {
   id: string;
-  date: Date;
+  account_id: string;
   amount: number;
-  type: "add" | "subtract";
-  category: "cash" | "savings" | "investments";
+  type: string;
+  category: string;
+  created_at: string;
 }
 
 interface ModalState {
@@ -43,7 +44,7 @@ const Index = () => {
   const { session } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: accounts, isLoading, isError } = useQuery({
+  const { data: accounts } = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -67,7 +68,7 @@ const Index = () => {
       if (error) {
         throw new Error(error.message);
       }
-      return data as Transaction[];
+      return (data || []) as Transaction[];
     },
   });
 
@@ -121,27 +122,22 @@ const Index = () => {
     setModalState({ isOpen: true, type, accountId });
   };
 
-  const handleTransaction = async (
-    transaction: { amount: number, type: "add" | "subtract", category: string },
-    accountId: string | null
-  ) => {
-    if (!accountId) {
+  const handleTransaction = async (amount: number) => {
+    if (!modalState.accountId || !modalState.type) {
       toast({
         title: "Error",
-        description: "Account ID is required",
+        description: "Invalid transaction parameters",
         variant: "destructive",
       });
       return;
     }
 
-    const { amount, type, category } = transaction;
-
-    const { data, error } = await supabase.from("transactions").insert([
+    const { error } = await supabase.from("transactions").insert([
       {
-        account_id: accountId,
+        account_id: modalState.accountId,
         amount,
-        type,
-        category,
+        type: modalState.type,
+        category: "cash", // Default to cash for now
       },
     ]);
 
@@ -157,6 +153,7 @@ const Index = () => {
         description: "Transaction added successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
     }
 
     setModalState({ ...modalState, isOpen: false });
@@ -271,9 +268,9 @@ const Index = () => {
       <TransactionModal
         isOpen={modalState.isOpen}
         onClose={() => setModalState({ ...modalState, isOpen: false })}
-        onSubmit={handleTransaction}
+        onConfirm={handleTransaction}
         type={modalState.type}
-        accountId={modalState.accountId}
+        category={modalState.accountId ? "cash" : undefined}
       />
     </div>
   );

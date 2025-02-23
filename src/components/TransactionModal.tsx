@@ -13,8 +13,8 @@ interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (amount: number) => void;
-  type: "add" | "subtract";
-  category: string;
+  type: "add" | "subtract" | null;
+  category?: string;
 }
 
 export const TransactionModal = ({
@@ -36,12 +36,15 @@ export const TransactionModal = ({
     }
   };
 
+  const title = type === "add" ? "Add to" : "Subtract from";
+  const actionText = type === "add" ? "Add" : "Subtract";
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {type === "add" ? "Add to" : "Subtract from"} {category}
+            {title} {category}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
@@ -56,9 +59,7 @@ export const TransactionModal = ({
               placeholder="Enter amount"
               className="col-span-3"
             />
-            <Button type="submit">
-              {type === "add" ? "Add" : "Subtract"}
-            </Button>
+            <Button type="submit">{actionText}</Button>
           </div>
         </form>
       </DialogContent>
