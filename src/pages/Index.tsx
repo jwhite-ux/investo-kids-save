@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
@@ -7,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/AuthProvider";
 
 interface AccountBalances {
   cash: number;
@@ -40,6 +40,7 @@ const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
@@ -85,6 +86,8 @@ const Index = () => {
 
   const addAccountMutation = useMutation({
     mutationFn: async () => {
+      if (!session?.user?.id) throw new Error("User not authenticated");
+      
       const { data, error } = await supabase
         .from("kids_accounts")
         .insert([
@@ -93,6 +96,7 @@ const Index = () => {
             cash_balance: 0,
             savings_balance: 0,
             investments_balance: 0,
+            user_id: session.user.id,
           }
         ])
         .select()
@@ -106,6 +110,13 @@ const Index = () => {
       toast({
         title: "Success",
         description: "Account created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create account: " + error.message,
+        variant: "destructive",
       });
     },
   });
