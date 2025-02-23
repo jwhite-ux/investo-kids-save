@@ -25,6 +25,17 @@ const getGradient = (type: string) => {
   }
 };
 
+const getInterestRate = (type: string) => {
+  switch (type) {
+    case 'savings':
+      return '4.5% APY';
+    case 'investments':
+      return '8-12% avg. return';
+    default:
+      return null;
+  }
+};
+
 export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
@@ -44,6 +55,8 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
     mouseX.set(x);
     mouseY.set(y);
   };
+
+  const interestRate = getInterestRate(type);
 
   return (
     <Card 
@@ -70,7 +83,12 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
         />
       )}
       <div className="flex flex-col space-y-4">
-        <h3 className="text-lg font-medium text-white/90">{title}</h3>
+        <div className="space-y-1">
+          <h3 className="text-lg font-medium text-white/90">{title}</h3>
+          {interestRate && (
+            <p className="text-sm font-medium text-white/75">{interestRate}</p>
+          )}
+        </div>
         <motion.div
           key={amount}
           initial={{ opacity: 0, y: 10 }}
