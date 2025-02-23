@@ -1,7 +1,7 @@
 
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
 import { useRef } from "react";
 
 interface BalanceCardProps {
@@ -57,6 +57,15 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
   };
 
   const interestRate = getInterestRate(type);
+  const annualRate = getAnnualRate(type);
+
+  const projections = type !== 'cash' ? {
+    twoWeeks: calculateProjectedBalance(amount, annualRate, 14),
+    thirtyDays: calculateProjectedBalance(amount, annualRate, 30),
+    sixMonths: calculateProjectedBalance(amount, annualRate, 180),
+    oneYear: calculateProjectedBalance(amount, annualRate, 365),
+    fiveYears: calculateProjectedBalance(amount, annualRate, 1825),
+  } : null;
 
   return (
     <Card 
@@ -111,6 +120,19 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract }: BalanceC
             Subtract
           </button>
         </div>
+
+        {projections && amount > 0 && (
+          <div className="mt-4 space-y-2 border-t border-white/20 pt-4">
+            <p className="text-sm font-medium text-white/90">Projected Balance:</p>
+            <div className="space-y-1 text-sm text-white/75">
+              <p>2 Weeks: {formatCurrency(projections.twoWeeks)}</p>
+              <p>30 Days: {formatCurrency(projections.thirtyDays)}</p>
+              <p>6 Months: {formatCurrency(projections.sixMonths)}</p>
+              <p>1 Year: {formatCurrency(projections.oneYear)}</p>
+              <p>5 Years: {formatCurrency(projections.fiveYears)}</p>
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );
