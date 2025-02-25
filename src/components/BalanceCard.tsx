@@ -127,6 +127,10 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     { name: '5y', value: projections.fiveYears },
   ] : [];
 
+  const minValue = amount;
+  const maxValue = projections ? projections.fiveYears : amount;
+  const domainPadding = (maxValue - minValue) * 0.1; // Add 10% padding
+
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -266,21 +270,28 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
       {projections && amount > 0 ? (
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
           <div className="h-32 mb-4">
-            <ResponsiveContainer width="100%" height="100%" key={`${type}-${amount}-${interestRateValue}`}>
-              <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height="100%" key={`chart-${type}-${amount}-${interestRateValue}`}>
+              <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5, left: 10 }}>
                 <Line
                   type="monotone"
                   dataKey="value"
                   stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                   strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
+                  strokeWidth={0}
                   dot={(props: any) => {
                     if (props.payload.name === '5y') {
                       return (
                         <>
                           <text
                             x={props.cx - 10}
-                            y={props.cy}
-                            dy={4}
+                            y={props.cy - 10}
                             fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                             fontSize={12}
                             fontWeight="500"
@@ -304,12 +315,13 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                 />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
                   tickLine={false}
                   axisLine={false}
+                  dy={10}
                 />
                 <YAxis
-                  domain={[amount, maxProjection]}
+                  domain={[minValue - domainPadding, maxValue + domainPadding]}
                   hide={true}
                 />
                 <Tooltip content={<CustomTooltip />} />
