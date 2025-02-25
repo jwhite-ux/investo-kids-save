@@ -172,8 +172,8 @@ const Index = () => {
               onClick={() => setSelectedAccountId(account.id)}
               className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                 selectedAccountId === account.id
-                  ? 'bg-[#9b87f5] text-white'
-                  : 'bg-[#F1F0FB] text-[#1A1F2C] hover:bg-[#C8C8C9]'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
               }`}
             >
               {account.name}
