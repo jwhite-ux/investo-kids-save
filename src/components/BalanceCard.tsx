@@ -2,7 +2,7 @@
 import { useMotionValue, useSpring, motion } from "framer-motion";
 import { Card } from "./ui/card";
 import { calculateProjectedBalance, getAnnualRate } from "../utils/format";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { CardHeader } from "./balance/CardHeader";
 import { StepperControls } from "./balance/StepperControls";
 import { ProjectionsChart } from "./balance/ProjectionsChart";
@@ -54,10 +54,24 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  
+  // Add state to track pending transactions
+  const [pendingAmount, setPendingAmount] = useState(0);
+  const [pendingType, setPendingType] = useState<"add" | "subtract" | null>(null);
+  const timeoutRef = useRef<number>();
 
   const springConfig = { damping: 25, stiffness: 700 };
   const followX = useSpring(mouseX, springConfig);
   const followY = useSpring(mouseY, springConfig);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current || type !== 'cash') return;
@@ -70,11 +84,35 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     mouseY.set(y);
   };
 
+  const commitPendingTransaction = () => {
+    if (pendingAmount > 0 && pendingType) {
+      onBalanceChange(pendingType === "add" ? amount + pendingAmount : amount - pendingAmount);
+      setPendingAmount(0);
+      setPendingType(null);
+    }
+  };
+
   const handleStep = (stepType: "add" | "subtract") => {
     if (stepType === "subtract" && amount < 1) return;
     
-    const newValue = stepType === "add" ? amount + 1 : amount - 1;
-    onBalanceChange(newValue);
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+    }
+
+    // If this is a new transaction type, commit any pending transaction first
+    if (pendingType && pendingType !== stepType) {
+      commitPendingTransaction();
+    }
+
+    // Update pending amount
+    setPendingType(stepType);
+    setPendingAmount(prev => prev + 1);
+
+    // Set a timeout to commit the transaction
+    timeoutRef.current = window.setTimeout(() => {
+      commitPendingTransaction();
+    }, 1500); // Wait 1.5 seconds before committing
   };
 
   const interestRate = getInterestRate(type);
@@ -87,6 +125,13 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     oneYear: calculateProjectedBalance(amount, annualRate, 365),
     fiveYears: calculateProjectedBalance(amount, annualRate, 1825),
   } : null;
+
+  // Calculate the preview amount including pending changes
+  const previewAmount = pendingType === "add" 
+    ? amount + pendingAmount 
+    : pendingType === "subtract" 
+      ? amount - pendingAmount 
+      : amount;
 
   return (
     <div className="flex flex-col space-y-4 h-full">
@@ -116,7 +161,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         <div className="flex justify-between items-start">
           <CardHeader 
             title={title} 
-            amount={amount} 
+            amount={previewAmount} 
             interestRate={interestRate}
             onAmountChange={onBalanceChange}
           />
@@ -124,8 +169,8 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         </div>
       </Card>
 
-      {projections && amount > 0 ? (
-        <ProjectionsChart amount={amount} projections={projections} type={type as 'savings' | 'investments'} />
+      {projections && previewAmount > 0 ? (
+        <ProjectionsChart amount={previewAmount} projections={projections} type={type as 'savings' | 'investments'} />
       ) : (
         <TransactionHistory transactions={transactions} />
       )}
