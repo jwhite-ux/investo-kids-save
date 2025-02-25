@@ -155,7 +155,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
               {formatCurrency(amount)}
             </motion.div>
           </div>
-          <div className="flex items-center gap-2 mt-12">
+          <div className="flex items-center gap-2 mt-[52px]">
             <button
               onClick={() => handleStep("subtract")}
               disabled={amount < 1}
