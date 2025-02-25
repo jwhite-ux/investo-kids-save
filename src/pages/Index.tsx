@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
 import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AccountBalances {
   cash: number;
@@ -166,19 +164,20 @@ const Index = () => {
           </button>
         </div>
 
-        <div className="mb-6">
-          <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Select an account" />
-            </SelectTrigger>
-            <SelectContent>
-              {accounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {accounts.map((account) => (
+            <button
+              key={account.id}
+              onClick={() => setSelectedAccountId(account.id)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
+                ${selectedAccountId === account.id 
+                  ? 'bg-gray-900 text-white' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+                }`}
+            >
+              {account.name}
+            </button>
+          ))}
         </div>
 
         {selectedAccount && (
