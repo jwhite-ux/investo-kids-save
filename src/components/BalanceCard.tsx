@@ -1,5 +1,5 @@
 
-import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
 import { useRef, useState } from "react";
@@ -261,49 +261,22 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
 
       {projections && amount > 0 ? (
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
-          <motion.div 
-            key={amount} 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="h-32 mb-4"
-          >
+          <div className="h-32 mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart 
-                data={chartData} 
-                margin={{ right: 20, top: 20, bottom: 5, left: 10 }}
-              >
+              <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5 }}>
                 <Line
                   type="monotone"
                   dataKey="value"
                   stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                   strokeWidth={2}
-                  dot={false}
-                >
-                  <motion.animate
-                    attributeName="stroke-dashoffset"
-                    from="1000"
-                    to="0"
-                    dur="1s"
-                    fill="freeze"
-                  />
-                </Line>
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
-                  strokeWidth={0}
                   dot={(props: any) => {
                     if (props.payload.name === '5y') {
                       return (
-                        <motion.g
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.5, duration: 0.3 }}
-                        >
+                        <>
                           <text
                             x={props.cx - 10}
-                            y={props.cy - 10}
+                            y={props.cy}
+                            dy={4}
                             fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                             fontSize={12}
                             fontWeight="500"
@@ -319,7 +292,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                             stroke="white"
                             strokeWidth={2}
                           />
-                        </motion.g>
+                        </>
                       );
                     }
                     return null;
@@ -331,46 +304,38 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   tickLine={false}
                   axisLine={false}
                 />
-                <YAxis 
-                  width={0}
-                  domain={[0, dataMax => dataMax * 1.1]}
-                  scale="linear"
+                <YAxis
+                  hide
+                  domain={['dataMin', 'dataMax']}
                 />
                 <Tooltip content={<CustomTooltip />} />
               </LineChart>
             </ResponsiveContainer>
-          </motion.div>
+          </div>
           
-          <motion.div
-            key={`projections-${amount}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
-            <div className="space-y-1 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>2 Weeks:</span>
-                <span className="font-medium">{formatCurrency(projections.twoWeeks)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>30 Days:</span>
-                <span className="font-medium">{formatCurrency(projections.thirtyDays)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>6 Months:</span>
-                <span className="font-medium">{formatCurrency(projections.sixMonths)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>1 Year:</span>
-                <span className="font-medium">{formatCurrency(projections.oneYear)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>5 Years:</span>
-                <span className="font-medium">{formatCurrency(projections.fiveYears)}</span>
-              </div>
+          <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
+          <div className="space-y-1 text-sm text-gray-600">
+            <div className="flex justify-between">
+              <span>2 Weeks:</span>
+              <span className="font-medium">{formatCurrency(projections.twoWeeks)}</span>
             </div>
-          </motion.div>
+            <div className="flex justify-between">
+              <span>30 Days:</span>
+              <span className="font-medium">{formatCurrency(projections.thirtyDays)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>6 Months:</span>
+              <span className="font-medium">{formatCurrency(projections.sixMonths)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>1 Year:</span>
+              <span className="font-medium">{formatCurrency(projections.oneYear)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>5 Years:</span>
+              <span className="font-medium">{formatCurrency(projections.fiveYears)}</span>
+            </div>
+          </div>
         </Card>
       ) : (
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
