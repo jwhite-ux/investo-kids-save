@@ -106,6 +106,11 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   const formattedInterestRate = formatInterestRate(interestRateValue, type);
   const annualRate = interestRateValue ? interestRateValue / 100 : getAnnualRate(type);
 
+  // Calculate 5-year projections for both savings and investments
+  const savingsFiveYear = type !== 'cash' ? calculateProjectedBalance(amount, getAnnualRate('savings'), 1825) : 0;
+  const investmentsFiveYear = type !== 'cash' ? calculateProjectedBalance(amount, getAnnualRate('investments'), 1825) : 0;
+  const maxProjection = Math.max(savingsFiveYear, investmentsFiveYear);
+
   const projections = type !== 'cash' ? {
     twoWeeks: calculateProjectedBalance(amount, annualRate, 14),
     thirtyDays: calculateProjectedBalance(amount, annualRate, 30),
@@ -305,8 +310,13 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   axisLine={false}
                 />
                 <YAxis
-                  hide
-                  domain={['dataMin', 'dataMax']}
+                  domain={[0, maxProjection]}
+                  hide={false}
+                  tickFormatter={(value) => formatCurrency(value)}
+                  tick={{ fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={60}
                 />
                 <Tooltip content={<CustomTooltip />} />
               </LineChart>
@@ -345,7 +355,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
               transactions.map((transaction) => (
                 <div key={transaction.id} className="flex justify-between items-center text-sm">
                   <span className="text-gray-600">
-                    {format(new Date(transaction.date), "MMM d, yyyy")}
+                    {format(transaction.date, "MMM d, yyyy")}
                   </span>
                   <span className={`font-medium ${transaction.type === 'add' ? 'text-green-600' : 'text-red-600'}`}>
                     {transaction.type === 'add' ? '+' : '-'}{formatCurrency(transaction.amount)}
