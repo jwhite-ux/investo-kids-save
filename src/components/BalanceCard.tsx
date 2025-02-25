@@ -1,4 +1,3 @@
-
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -106,7 +105,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   const formattedInterestRate = formatInterestRate(interestRateValue, type);
   const annualRate = interestRateValue ? interestRateValue / 100 : getAnnualRate(type);
 
-  // Calculate 5-year projections for both savings and investments
   const savingsFiveYear = type !== 'cash' ? calculateProjectedBalance(amount, getAnnualRate('savings'), 1825) : 0;
   const investmentsFiveYear = type !== 'cash' ? calculateProjectedBalance(amount, getAnnualRate('investments'), 1825) : 0;
   const maxProjection = Math.max(savingsFiveYear, investmentsFiveYear);
@@ -311,12 +309,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                 />
                 <YAxis
                   domain={[amount, maxProjection]}
-                  hide={false}
-                  tickFormatter={(value) => formatCurrency(value)}
-                  tick={{ fontSize: 10 }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={60}
+                  hide={true}
                 />
                 <Tooltip content={<CustomTooltip />} />
               </LineChart>
