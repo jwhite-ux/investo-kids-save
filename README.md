@@ -1,3 +1,4 @@
+
 # Welcome to your Lovable project
 
 ## Project info
@@ -52,18 +53,46 @@ npm run dev
 
 ## What technologies are used for this project?
 
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- Framer Motion for animations
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/1fc0622a-5269-4d01-937e-b4f3505fd0b2) and click on Share -> Publish.
+### Using Lovable's built-in publishing
+
+1. Open [Lovable](https://lovable.dev/projects/1fc0622a-5269-4d01-937e-b4f3505fd0b2) and click on Share -> Publish.
+2. If you encounter any issues with the Lovable deployment, try:
+   - Making sure all dependencies are correctly installed
+   - Verifying there are no build errors in the console
+   - Checking that all assets are correctly referenced
+
+### Alternative Deployment Methods
+
+If you're experiencing issues with Lovable's built-in publishing, you can deploy to Netlify, Vercel, or GitHub Pages:
+
+**Deploy to Netlify:**
+1. Create a Netlify account if you don't have one
+2. Connect your GitHub repository
+3. Configure the build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+**Deploy to Vercel:**
+1. Create a Vercel account if you don't have one
+2. Import your GitHub repository
+3. The defaults should work, but verify:
+   - Framework preset: Vite
+   - Build command: `npm run build`
+   - Output directory: `dist`
 
 ## I want to use a custom domain - is that possible?
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+We don't support custom domains (yet) directly in Lovable. If you want to deploy your project under your own domain then we recommend using Netlify or Vercel as described above.
+
+Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
