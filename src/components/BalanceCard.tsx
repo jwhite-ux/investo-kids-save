@@ -114,7 +114,12 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
           />
         )}
         <div className="flex justify-between items-start">
-          <CardHeader title={title} amount={amount} interestRate={interestRate} />
+          <CardHeader 
+            title={title} 
+            amount={amount} 
+            interestRate={interestRate}
+            onAmountChange={onBalanceChange}
+          />
           <StepperControls amount={amount} onStep={handleStep} />
         </div>
       </Card>
