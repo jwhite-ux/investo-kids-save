@@ -1,4 +1,3 @@
-
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -126,10 +125,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     { name: '1y', value: projections.oneYear },
     { name: '5y', value: projections.fiveYears },
   ] : [];
-
-  const minValue = amount;
-  const maxValue = projections ? projections.fiveYears : amount;
-  const domainPadding = (maxValue - minValue) * 0.1; // Add 10% padding
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -270,7 +265,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
       {projections && amount > 0 ? (
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
           <div className="h-32 mb-4">
-            <ResponsiveContainer width="100%" height="100%" key={`chart-${type}-${amount}-${interestRateValue}`}>
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5, left: 10 }}>
                 <Line
                   type="monotone"
@@ -278,7 +273,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                   strokeWidth={2}
                   dot={false}
-                  isAnimationActive={false}
                 />
                 <Line
                   type="monotone"
@@ -321,7 +315,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   dy={10}
                 />
                 <YAxis
-                  domain={[minValue - domainPadding, maxValue + domainPadding]}
+                  domain={[0, Math.max(maxProjection, amount * 1.1)]}
                   hide={true}
                 />
                 <Tooltip content={<CustomTooltip />} />
