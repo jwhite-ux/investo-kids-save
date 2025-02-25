@@ -60,7 +60,7 @@ export const CardHeader = ({ title, amount, interestRate, onAmountChange }: Card
           onChange={(e) => setInputValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="text-3xl font-bold h-auto py-0 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+          className="text-3xl font-bold h-auto py-0 bg-white/10 border-white/20 text-white placeholder:text-white/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           autoFocus
         />
       ) : (
