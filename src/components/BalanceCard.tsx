@@ -310,7 +310,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   axisLine={false}
                 />
                 <YAxis
-                  domain={[0, maxProjection]}
+                  domain={[amount, maxProjection]}
                   hide={false}
                   tickFormatter={(value) => formatCurrency(value)}
                   tick={{ fontSize: 10 }}
