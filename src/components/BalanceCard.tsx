@@ -1,3 +1,4 @@
+
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -104,10 +105,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
 
   const formattedInterestRate = formatInterestRate(interestRateValue, type);
   const annualRate = interestRateValue ? interestRateValue / 100 : getAnnualRate(type);
-
-  const savingsFiveYear = type !== 'cash' ? calculateProjectedBalance(amount, getAnnualRate('savings'), 1825) : 0;
-  const investmentsFiveYear = type !== 'cash' ? calculateProjectedBalance(amount, getAnnualRate('investments'), 1825) : 0;
-  const maxProjection = Math.max(savingsFiveYear, investmentsFiveYear);
 
   const projections = type !== 'cash' ? {
     twoWeeks: calculateProjectedBalance(amount, annualRate, 14),
@@ -266,26 +263,20 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
           <div className="h-32 mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5, left: 10 }}>
+              <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5 }}>
                 <Line
                   type="monotone"
                   dataKey="value"
                   stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                   strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
-                  strokeWidth={0}
                   dot={(props: any) => {
                     if (props.payload.name === '5y') {
                       return (
                         <>
                           <text
                             x={props.cx - 10}
-                            y={props.cy - 10}
+                            y={props.cy}
+                            dy={4}
                             fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
                             fontSize={12}
                             fontWeight="500"
@@ -309,14 +300,13 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                 />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
+                  tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
-                  dy={10}
                 />
                 <YAxis
-                  domain={[0, Math.max(maxProjection, amount * 1.1)]}
-                  hide={true}
+                  hide
+                  domain={['dataMin', 'dataMax']}
                 />
                 <Tooltip content={<CustomTooltip />} />
               </LineChart>
@@ -355,7 +345,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
               transactions.map((transaction) => (
                 <div key={transaction.id} className="flex justify-between items-center text-sm">
                   <span className="text-gray-600">
-                    {format(transaction.date, "MMM d, yyyy")}
+                    {format(new Date(transaction.date), "MMM d, yyyy")}
                   </span>
                   <span className={`font-medium ${transaction.type === 'add' ? 'text-green-600' : 'text-red-600'}`}>
                     {transaction.type === 'add' ? '+' : '-'}{formatCurrency(transaction.amount)}

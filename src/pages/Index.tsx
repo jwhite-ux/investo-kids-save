@@ -39,10 +39,6 @@ const Index = () => {
     }];
   });
 
-  const [selectedAccountId, setSelectedAccountId] = useState<string>(() => {
-    return accounts[0]?.id || '';
-  });
-
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     const savedTransactions = localStorage.getItem('transactions');
     return savedTransactions ? JSON.parse(savedTransactions, (key, value) => {
@@ -146,8 +142,6 @@ const Index = () => {
     }));
   };
 
-  const selectedAccount = accounts.find(account => account.id === selectedAccountId);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
       <div className="mx-auto max-w-7xl">
@@ -164,70 +158,56 @@ const Index = () => {
           </button>
         </div>
 
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="space-y-8">
           {accounts.map((account) => (
-            <button
-              key={account.id}
-              onClick={() => setSelectedAccountId(account.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
-                ${selectedAccountId === account.id 
-                  ? 'bg-gray-900 text-white' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100'
-                }`}
-            >
-              {account.name}
-            </button>
+            <div key={account.id} className="rounded-xl bg-white/50 backdrop-blur-sm p-6 shadow-sm">
+              <div className="mb-6">
+                <input
+                  type="text"
+                  value={account.name}
+                  onChange={(e) => handleNameChange(account.id, e.target.value)}
+                  className="text-2xl font-semibold bg-transparent border-none p-0 focus:ring-0 w-full"
+                />
+                <p className="mt-2 text-lg text-gray-600">
+                  Total Balance:{" "}
+                  <span className="font-semibold text-money">
+                    ${Object.values(account.balances).reduce((a, b) => a + b, 0).toFixed(2)}
+                  </span>
+                </p>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-3">
+                <BalanceCard
+                  title="Cash"
+                  amount={account.balances.cash}
+                  type="cash"
+                  onAdd={() => openModal("add", "cash", account.id)}
+                  onSubtract={() => openModal("subtract", "cash", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "cash", newAmount)}
+                  transactions={transactions.filter(t => t.category === "cash" && t.accountId === account.id)}
+                />
+                <BalanceCard
+                  title="Savings"
+                  amount={account.balances.savings}
+                  type="savings"
+                  onAdd={() => openModal("add", "savings", account.id)}
+                  onSubtract={() => openModal("subtract", "savings", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "savings", newAmount)}
+                  transactions={transactions.filter(t => t.category === "savings" && t.accountId === account.id)}
+                />
+                <BalanceCard
+                  title="Investments"
+                  amount={account.balances.investments}
+                  type="investments"
+                  onAdd={() => openModal("add", "investments", account.id)}
+                  onSubtract={() => openModal("subtract", "investments", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "investments", newAmount)}
+                  transactions={transactions.filter(t => t.category === "investments" && t.accountId === account.id)}
+                />
+              </div>
+            </div>
           ))}
         </div>
-
-        {selectedAccount && (
-          <div className="rounded-xl bg-white/50 backdrop-blur-sm p-6 shadow-sm">
-            <div className="mb-6">
-              <input
-                type="text"
-                value={selectedAccount.name}
-                onChange={(e) => handleNameChange(selectedAccount.id, e.target.value)}
-                className="text-2xl font-semibold bg-transparent border-none p-0 focus:ring-0 w-full"
-              />
-              <p className="mt-2 text-lg text-gray-600">
-                Total Balance:{" "}
-                <span className="font-semibold text-money">
-                  ${Object.values(selectedAccount.balances).reduce((a, b) => a + b, 0).toFixed(2)}
-                </span>
-              </p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              <BalanceCard
-                title="Cash"
-                amount={selectedAccount.balances.cash}
-                type="cash"
-                onAdd={() => openModal("add", "cash", selectedAccount.id)}
-                onSubtract={() => openModal("subtract", "cash", selectedAccount.id)}
-                onBalanceChange={(newAmount) => handleBalanceChange(selectedAccount.id, "cash", newAmount)}
-                transactions={transactions.filter(t => t.category === "cash" && t.accountId === selectedAccount.id)}
-              />
-              <BalanceCard
-                title="Savings"
-                amount={selectedAccount.balances.savings}
-                type="savings"
-                onAdd={() => openModal("add", "savings", selectedAccount.id)}
-                onSubtract={() => openModal("subtract", "savings", selectedAccount.id)}
-                onBalanceChange={(newAmount) => handleBalanceChange(selectedAccount.id, "savings", newAmount)}
-                transactions={transactions.filter(t => t.category === "savings" && t.accountId === selectedAccount.id)}
-              />
-              <BalanceCard
-                title="Investments"
-                amount={selectedAccount.balances.investments}
-                type="investments"
-                onAdd={() => openModal("add", "investments", selectedAccount.id)}
-                onSubtract={() => openModal("subtract", "investments", selectedAccount.id)}
-                onBalanceChange={(newAmount) => handleBalanceChange(selectedAccount.id, "investments", newAmount)}
-                transactions={transactions.filter(t => t.category === "investments" && t.accountId === selectedAccount.id)}
-              />
-            </div>
-          </div>
-        )}
 
         <TransactionModal
           isOpen={modalState.isOpen}
