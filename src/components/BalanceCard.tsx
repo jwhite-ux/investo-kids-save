@@ -4,6 +4,7 @@ import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../uti
 import { useRef, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns";
+import { Plus, Minus } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -51,6 +52,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  const [stepperValue, setStepperValue] = useState(0);
 
   const springConfig = { damping: 25, stiffness: 700 };
   const followX = useSpring(mouseX, springConfig);
@@ -65,6 +67,13 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
 
     mouseX.set(x);
     mouseY.set(y);
+  };
+
+  const handleStep = (type: "add" | "subtract") => {
+    if (type === "subtract" && amount < 1) return;
+    
+    const newValue = type === "add" ? amount + 1 : amount - 1;
+    onBalanceChange(newValue);
   };
 
   const interestRate = getInterestRate(type);
@@ -98,35 +107,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
       );
     }
     return null;
-  };
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(amount.toString());
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleStartEdit = () => {
-    setEditValue(amount.toString());
-    setIsEditing(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
-  };
-
-  const handleFinishEdit = () => {
-    const newAmount = parseFloat(editValue);
-    if (!isNaN(newAmount) && newAmount >= 0) {
-      onBalanceChange(newAmount);
-    } else {
-      setEditValue(amount.toString());
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleFinishEdit();
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      setEditValue(amount.toString());
-    }
   };
 
   return (
@@ -168,37 +148,26 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             key={amount}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold text-white cursor-pointer"
-            onClick={handleStartEdit}
+            className="text-3xl font-bold text-white"
           >
-            {isEditing ? (
-              <input
-                ref={inputRef}
-                type="number"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={handleFinishEdit}
-                onKeyDown={handleKeyDown}
-                className="bg-transparent border-none p-0 text-3xl font-bold text-white w-full focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                step="0.01"
-                min="0"
-              />
-            ) : (
-              formatCurrency(amount)
-            )}
+            {formatCurrency(amount)}
           </motion.div>
-          <div className="flex space-x-2">
+          <div className="flex items-center justify-center gap-4">
             <button
-              onClick={onAdd}
-              className="rounded bg-white/20 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/30"
+              onClick={() => handleStep("subtract")}
+              disabled={amount < 1}
+              className={`rounded-full bg-white/20 w-12 h-12 flex items-center justify-center backdrop-blur-sm transition-all
+                ${amount >= 1 ? 'hover:bg-white/30 active:scale-95' : 'opacity-50 cursor-not-allowed'}
+              `}
             >
-              Add
+              <Minus className="h-6 w-6 text-white" />
             </button>
+            <div className="text-white font-medium">$1.00</div>
             <button
-              onClick={onSubtract}
-              className="rounded bg-white/20 px-3 py-1 text-sm text-white backdrop-blur-sm transition-colors hover:bg-white/30"
+              onClick={() => handleStep("add")}
+              className="rounded-full bg-white/20 w-12 h-12 flex items-center justify-center backdrop-blur-sm transition-all hover:bg-white/30 active:scale-95"
             >
-              Subtract
+              <Plus className="h-6 w-6 text-white" />
             </button>
           </div>
         </div>
