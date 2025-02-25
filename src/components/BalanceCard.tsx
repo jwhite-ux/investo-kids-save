@@ -1,3 +1,4 @@
+
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -265,7 +266,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
       {projections && amount > 0 ? (
         <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
           <div className="h-32 mb-4">
-            <ResponsiveContainer width="100%" height="100%" key={`${selectedAccountId}-${amount}-${type}`}>
+            <ResponsiveContainer width="100%" height="100%" key={`${type}-${amount}-${interestRateValue}`}>
               <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5 }}>
                 <Line
                   type="monotone"
