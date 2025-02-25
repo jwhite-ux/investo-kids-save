@@ -1,11 +1,12 @@
 
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { useMotionValue, useSpring, motion } from "framer-motion";
 import { Card } from "./ui/card";
-import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
-import { useRef, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { format } from "date-fns";
-import { Plus, Minus } from "lucide-react";
+import { calculateProjectedBalance, getAnnualRate } from "../utils/format";
+import { useRef } from "react";
+import { CardHeader } from "./balance/CardHeader";
+import { StepperControls } from "./balance/StepperControls";
+import { ProjectionsChart } from "./balance/ProjectionsChart";
+import { TransactionHistory } from "./balance/TransactionHistory";
 
 interface Transaction {
   id: string;
@@ -53,7 +54,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const [stepperValue, setStepperValue] = useState(0);
 
   const springConfig = { damping: 25, stiffness: 700 };
   const followX = useSpring(mouseX, springConfig);
@@ -70,10 +70,10 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     mouseY.set(y);
   };
 
-  const handleStep = (type: "add" | "subtract") => {
-    if (type === "subtract" && amount < 1) return;
+  const handleStep = (stepType: "add" | "subtract") => {
+    if (stepType === "subtract" && amount < 1) return;
     
-    const newValue = type === "add" ? amount + 1 : amount - 1;
+    const newValue = stepType === "add" ? amount + 1 : amount - 1;
     onBalanceChange(newValue);
   };
 
@@ -87,28 +87,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     oneYear: calculateProjectedBalance(amount, annualRate, 365),
     fiveYears: calculateProjectedBalance(amount, annualRate, 1825),
   } : null;
-
-  const chartData = projections ? [
-    { name: 'Now', value: amount },
-    { name: '2w', value: projections.twoWeeks },
-    { name: '30d', value: projections.thirtyDays },
-    { name: '6m', value: projections.sixMonths },
-    { name: '1y', value: projections.oneYear },
-    { name: '5y', value: projections.fiveYears },
-  ] : [];
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white/90 backdrop-blur-sm p-2 rounded shadow-lg border border-gray-200">
-          <p className="text-sm font-medium text-gray-900">
-            {formatCurrency(payload[0].value)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="flex flex-col space-y-4 h-full">
@@ -136,143 +114,15 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
           />
         )}
         <div className="flex justify-between items-start">
-          <div className="flex flex-col space-y-4">
-            <div className="space-y-1">
-              <h3 className="text-lg font-medium text-white/90">{title}</h3>
-              {interestRate && (
-                <p className="text-sm font-medium text-white/75">{interestRate}</p>
-              )}
-              {!interestRate && (
-                <p className="text-sm font-medium text-white/75">&nbsp;</p>
-              )}
-            </div>
-            <motion.div
-              key={amount}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-3xl font-bold text-white"
-            >
-              {formatCurrency(amount)}
-            </motion.div>
-          </div>
-          <div className="flex items-center gap-2 mt-[52px]">
-            <button
-              onClick={() => handleStep("subtract")}
-              disabled={amount < 1}
-              className={`rounded-full bg-white/20 w-12 h-12 flex items-center justify-center backdrop-blur-sm transition-all
-                ${amount >= 1 ? 'hover:bg-white/30 active:scale-95' : 'opacity-50 cursor-not-allowed'}
-              `}
-            >
-              <Minus className="h-6 w-6 text-white" />
-            </button>
-            <button
-              onClick={() => handleStep("add")}
-              className="rounded-full bg-white/20 w-12 h-12 flex items-center justify-center backdrop-blur-sm transition-all hover:bg-white/30 active:scale-95"
-            >
-              <Plus className="h-6 w-6 text-white" />
-            </button>
-          </div>
+          <CardHeader title={title} amount={amount} interestRate={interestRate} />
+          <StepperControls amount={amount} onStep={handleStep} />
         </div>
       </Card>
 
       {projections && amount > 0 ? (
-        <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
-          <div className="h-32 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5 }}>
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={type === 'savings' ? '#4F46E5' : '#7C3AED'}
-                  strokeWidth={2}
-                  dot={(props: any) => {
-                    if (props.payload.name === '5y') {
-                      return (
-                        <>
-                          <text
-                            x={props.cx - 10}
-                            y={props.cy}
-                            dy={4}
-                            fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
-                            fontSize={12}
-                            fontWeight="500"
-                            textAnchor="end"
-                          >
-                            {formatCurrency(props.payload.value)}
-                          </text>
-                          <circle
-                            cx={props.cx}
-                            cy={props.cy}
-                            r={4}
-                            fill={type === 'savings' ? '#4F46E5' : '#7C3AED'}
-                            stroke="white"
-                            strokeWidth={2}
-                          />
-                        </>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  hide
-                  domain={['dataMin', 'dataMax']}
-                />
-                <Tooltip content={<CustomTooltip />} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <p className="text-sm font-medium text-gray-900 mb-2">Projected Balance:</p>
-          <div className="space-y-1 text-sm text-gray-600">
-            <div className="flex justify-between">
-              <span>2 Weeks:</span>
-              <span className="font-medium">{formatCurrency(projections.twoWeeks)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>30 Days:</span>
-              <span className="font-medium">{formatCurrency(projections.thirtyDays)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>6 Months:</span>
-              <span className="font-medium">{formatCurrency(projections.sixMonths)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>1 Year:</span>
-              <span className="font-medium">{formatCurrency(projections.oneYear)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>5 Years:</span>
-              <span className="font-medium">{formatCurrency(projections.fiveYears)}</span>
-            </div>
-          </div>
-        </Card>
+        <ProjectionsChart amount={amount} projections={projections} type={type as 'savings' | 'investments'} />
       ) : (
-        <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
-          <p className="text-sm font-medium text-gray-900 mb-2">Transaction History:</p>
-          <div className="space-y-2">
-            {transactions.length > 0 ? (
-              transactions.map((transaction) => (
-                <div key={transaction.id} className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600">
-                    {format(new Date(transaction.date), "MMM d, yyyy")}
-                  </span>
-                  <span className={`font-medium ${transaction.type === 'add' ? 'text-green-600' : 'text-red-600'}`}>
-                    {transaction.type === 'add' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-gray-400">No transactions yet</p>
-            )}
-          </div>
-        </Card>
+        <TransactionHistory transactions={transactions} />
       )}
     </div>
   );
