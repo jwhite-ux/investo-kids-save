@@ -1,3 +1,4 @@
+
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -152,7 +153,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
           >
             {formatCurrency(amount)}
           </motion.div>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => handleStep("subtract")}
               disabled={amount < 1}
@@ -162,7 +163,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             >
               <Minus className="h-6 w-6 text-white" />
             </button>
-            <div className="text-white font-medium">$1.00</div>
             <button
               onClick={() => handleStep("add")}
               className="rounded-full bg-white/20 w-12 h-12 flex items-center justify-center backdrop-blur-sm transition-all hover:bg-white/30 active:scale-95"
