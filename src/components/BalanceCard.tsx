@@ -1,4 +1,3 @@
-
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Card } from "./ui/card";
 import { formatCurrency, calculateProjectedBalance, getAnnualRate } from "../utils/format";
@@ -269,7 +268,10 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             className="h-32 mb-4"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ right: 20, top: 10, bottom: 5 }}>
+              <LineChart 
+                data={chartData} 
+                margin={{ right: 20, top: 10, bottom: 5, left: 10 }}
+              >
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -328,7 +330,11 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
                   tickLine={false}
                   axisLine={false}
                 />
-                <YAxis hide />
+                <YAxis 
+                  width={0}
+                  domain={['dataMin', 'dataMax']}
+                  scale="linear"
+                />
                 <Tooltip content={<CustomTooltip />} />
               </LineChart>
             </ResponsiveContainer>
