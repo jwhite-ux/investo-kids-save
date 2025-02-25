@@ -1,23 +1,19 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
-import { Plus, LogOut, UserCircle } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/components/AuthProvider";
-import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
-interface DBTransaction {
+interface AccountBalances {
+  cash: number;
+  savings: number;
+  investments: number;
+}
+
+interface KidsAccount {
   id: string;
-  account_id: string;
-  amount: number;
-  type: string;
-  category: string;
-  created_at: string;
-  user_id: string;
+  name: string;
+  balances: AccountBalances;
 }
 
 interface Transaction {
@@ -26,271 +22,201 @@ interface Transaction {
   amount: number;
   type: "add" | "subtract";
   category: "cash" | "savings" | "investments";
-}
-
-interface ModalState {
-  isOpen: boolean;
-  type: "add" | "subtract" | null;
-  accountId: string | null;
-}
-
-interface Account {
-  id: string;
-  name: string;
-  cash_balance: number;
-  savings_balance: number;
-  investments_balance: number;
-  user_id: string;
+  accountId: string;
 }
 
 const Index = () => {
-  const [modalState, setModalState] = useState<ModalState>({
-    isOpen: false,
-    type: null,
-    accountId: null,
-  });
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const { session } = useAuth();
-  const queryClient = useQueryClient();
-
-  const { data: accounts = [] } = useQuery({
-    queryKey: ["accounts"],
-    queryFn: async () => {
-      if (!session?.user.id) return [];
-      const { data, error } = await supabase
-        .from("kids_accounts")
-        .select("*")
-        .eq("user_id", session.user.id);
-      if (error) throw error;
-      return data as Account[];
-    },
-    enabled: !!session?.user.id,
-  });
-
-  const { data: dbTransactions = [] } = useQuery({
-    queryKey: ["transactions"],
-    queryFn: async () => {
-      if (!session?.user.id) return [];
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", session.user.id);
-      if (error) throw error;
-      return data as DBTransaction[];
-    },
-    enabled: !!session?.user.id,
-  });
-
-  const transactions = dbTransactions.map(t => ({
-    id: t.id,
-    date: new Date(t.created_at),
-    amount: t.amount,
-    type: t.type as "add" | "subtract",
-    category: t.category as "cash" | "savings" | "investments"
-  }));
-
-  const addAccountMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.from("kids_accounts").insert([
-        {
-          user_id: session?.user.id,
-          name: "New Account",
-          cash_balance: 0,
-          savings_balance: 0,
-          investments_balance: 0,
-        },
-      ]);
-      if (error) {
-        throw new Error(error.message);
+  const [accounts, setAccounts] = useState<KidsAccount[]>(() => {
+    const savedAccounts = localStorage.getItem('accounts');
+    return savedAccounts ? JSON.parse(savedAccounts) : [{
+      id: crypto.randomUUID(),
+      name: "Kid's Account",
+      balances: {
+        cash: 0,
+        savings: 0,
+        investments: 0,
       }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      toast({
-        title: "Success",
-        description: "Account added successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+    }];
   });
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      localStorage.removeItem("sb-uiclcvtpifwbvfojxxtp-auth-token");
-      navigate("/auth");
-    }
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    const savedTransactions = localStorage.getItem('transactions');
+    return savedTransactions ? JSON.parse(savedTransactions, (key, value) => {
+      if (key === 'date') return new Date(value);
+      return value;
+    }) : [];
+  });
+
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    type: "add" as "add" | "subtract",
+    category: "",
+    accountId: "",
+  });
+
+  useEffect(() => {
+    localStorage.setItem('accounts', JSON.stringify(accounts));
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+  }, [accounts, transactions]);
+
+  const handleTransaction = (amount: number) => {
+    const newTransaction: Transaction = {
+      id: crypto.randomUUID(),
+      date: new Date(),
+      amount,
+      type: modalState.type,
+      category: modalState.category as "cash" | "savings" | "investments",
+      accountId: modalState.accountId,
+    };
+
+    setTransactions(prev => [newTransaction, ...prev]);
+    
+    setAccounts(prev => prev.map(account => {
+      if (account.id === modalState.accountId) {
+        return {
+          ...account,
+          balances: {
+            ...account.balances,
+            [modalState.category]: modalState.type === "add"
+              ? account.balances[modalState.category as keyof AccountBalances] + amount
+              : account.balances[modalState.category as keyof AccountBalances] - amount,
+          }
+        };
+      }
+      return account;
+    }));
   };
 
-  const openModal = (type: "add" | "subtract", accountId: string) => {
-    setModalState({ isOpen: true, type, accountId });
+  const openModal = (type: "add" | "subtract", category: string, accountId: string) => {
+    setModalState({ isOpen: true, type, category, accountId });
   };
 
-  const handleTransaction = async (amount: number) => {
-    if (!modalState.accountId || !modalState.type || !session?.user.id) {
-      toast({
-        title: "Error",
-        description: "Invalid transaction parameters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { error } = await supabase.from("transactions").insert([
-      {
-        user_id: session.user.id,
-        account_id: modalState.accountId,
-        amount,
-        type: modalState.type,
-        category: "cash", // Default to cash for now
-      },
-    ]);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Transaction added successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    }
-
-    setModalState({ ...modalState, isOpen: false });
+  const addNewAccount = () => {
+    const newAccount: KidsAccount = {
+      id: crypto.randomUUID(),
+      name: `Kid's Account ${accounts.length + 1}`,
+      balances: {
+        cash: 0,
+        savings: 0,
+        investments: 0,
+      }
+    };
+    setAccounts(prev => [...prev, newAccount]);
   };
 
-  const handleNameChange = async (accountId: string, newName: string) => {
-    const { error } = await supabase
-      .from("kids_accounts")
-      .update({ name: newName })
-      .eq("id", accountId);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Account name updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-    }
+  const handleNameChange = (accountId: string, newName: string) => {
+    setAccounts(prev => prev.map(account => {
+      if (account.id === accountId) {
+        return { ...account, name: newName };
+      }
+      return account;
+    }));
   };
 
-  const handleBalanceChange = async (
-    accountId: string,
-    balanceType: string,
-    newBalance: number
-  ) => {
-    const { error } = await supabase
-      .from("kids_accounts")
-      .update({ [balanceType]: newBalance })
-      .eq("id", accountId);
+  const handleBalanceChange = (accountId: string, category: keyof AccountBalances, newAmount: number) => {
+    setAccounts(prev => prev.map(account => {
+      if (account.id === accountId) {
+        const oldAmount = account.balances[category];
+        const difference = newAmount - oldAmount;
+        
+        const newTransaction: Transaction = {
+          id: crypto.randomUUID(),
+          date: new Date(),
+          amount: Math.abs(difference),
+          type: difference >= 0 ? "add" : "subtract",
+          category,
+          accountId,
+        };
+        
+        setTransactions(prev => [newTransaction, ...prev]);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: `${
-          balanceType.split("_")[0].charAt(0).toUpperCase() +
-          balanceType.split("_")[0].slice(1)
-        } balance updated successfully`,
-      });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-    }
+        return {
+          ...account,
+          balances: {
+            ...account.balances,
+            [category]: newAmount
+          }
+        };
+      }
+      return account;
+    }));
   };
 
   return (
-    <div className="container mx-auto p-4 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Kids Money Manager</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/profile")}>
-            <UserCircle className="mr-2" />
-            Profile
-          </Button>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2" />
-            Logout
-          </Button>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex justify-between items-center">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+            Invest.Kids
+          </h1>
+          <button
+            onClick={addNewAccount}
+            className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Account
+          </button>
         </div>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {accounts.map((account) => (
-          <div key={account.id} className="flex gap-4">
-            <BalanceCard
-              key={account.id}
-              account={account}
-              type="cash"
-              onTransaction={openModal}
-              onNameChange={handleNameChange}
-              onBalanceChange={handleBalanceChange}
-              transactions={transactions.filter(t => t.category === 'cash')}
-            />
-            <BalanceCard
-              key={`${account.id}-savings`}
-              account={account}
-              type="savings"
-              onTransaction={openModal}
-              onNameChange={handleNameChange}
-              onBalanceChange={handleBalanceChange}
-              transactions={transactions.filter(t => t.category === 'savings')}
-            />
-            <BalanceCard
-              key={`${account.id}-investments`}
-              account={account}
-              type="investments"
-              onTransaction={openModal}
-              onNameChange={handleNameChange}
-              onBalanceChange={handleBalanceChange}
-              transactions={transactions.filter(t => t.category === 'investments')}
-            />
-          </div>
-        ))}
-        <button
-          onClick={() => addAccountMutation.mutate()}
-          className="flex items-center justify-center h-48 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors"
-        >
-          <Plus className="mr-2" />
-          Add Account
-        </button>
-      </div>
+        <div className="space-y-8">
+          {accounts.map((account) => (
+            <div key={account.id} className="rounded-xl bg-white/50 backdrop-blur-sm p-6 shadow-sm">
+              <div className="mb-6">
+                <input
+                  type="text"
+                  value={account.name}
+                  onChange={(e) => handleNameChange(account.id, e.target.value)}
+                  className="text-2xl font-semibold bg-transparent border-none p-0 focus:ring-0 w-full"
+                />
+                <p className="mt-2 text-lg text-gray-600">
+                  Total Balance:{" "}
+                  <span className="font-semibold text-money">
+                    ${Object.values(account.balances).reduce((a, b) => a + b, 0).toFixed(2)}
+                  </span>
+                </p>
+              </div>
 
-      <TransactionModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState({ ...modalState, isOpen: false })}
-        onConfirm={handleTransaction}
-        type={modalState.type}
-        category={modalState.accountId ? "cash" : undefined}
-      />
+              <div className="grid gap-6 md:grid-cols-3">
+                <BalanceCard
+                  title="Cash"
+                  amount={account.balances.cash}
+                  type="cash"
+                  onAdd={() => openModal("add", "cash", account.id)}
+                  onSubtract={() => openModal("subtract", "cash", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "cash", newAmount)}
+                  transactions={transactions.filter(t => t.category === "cash" && t.accountId === account.id)}
+                />
+                <BalanceCard
+                  title="Savings"
+                  amount={account.balances.savings}
+                  type="savings"
+                  onAdd={() => openModal("add", "savings", account.id)}
+                  onSubtract={() => openModal("subtract", "savings", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "savings", newAmount)}
+                  transactions={transactions.filter(t => t.category === "savings" && t.accountId === account.id)}
+                />
+                <BalanceCard
+                  title="Investments"
+                  amount={account.balances.investments}
+                  type="investments"
+                  onAdd={() => openModal("add", "investments", account.id)}
+                  onSubtract={() => openModal("subtract", "investments", account.id)}
+                  onBalanceChange={(newAmount) => handleBalanceChange(account.id, "investments", newAmount)}
+                  transactions={transactions.filter(t => t.category === "investments" && t.accountId === account.id)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <TransactionModal
+          isOpen={modalState.isOpen}
+          onClose={() => setModalState({ ...modalState, isOpen: false })}
+          onConfirm={handleTransaction}
+          type={modalState.type}
+          category={modalState.category}
+        />
+      </div>
     </div>
   );
 };
