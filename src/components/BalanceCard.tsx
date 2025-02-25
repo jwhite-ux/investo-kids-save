@@ -135,25 +135,27 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             } as any}
           />
         )}
-        <div className="flex flex-col items-start space-y-4">
-          <div className="space-y-1">
-            <h3 className="text-lg font-medium text-white/90">{title}</h3>
-            {interestRate && (
-              <p className="text-sm font-medium text-white/75">{interestRate}</p>
-            )}
-            {!interestRate && (
-              <p className="text-sm font-medium text-white/75">&nbsp;</p>
-            )}
+        <div className="flex justify-between items-start">
+          <div className="flex flex-col space-y-4">
+            <div className="space-y-1">
+              <h3 className="text-lg font-medium text-white/90">{title}</h3>
+              {interestRate && (
+                <p className="text-sm font-medium text-white/75">{interestRate}</p>
+              )}
+              {!interestRate && (
+                <p className="text-sm font-medium text-white/75">&nbsp;</p>
+              )}
+            </div>
+            <motion.div
+              key={amount}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-3xl font-bold text-white"
+            >
+              {formatCurrency(amount)}
+            </motion.div>
           </div>
-          <motion.div
-            key={amount}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold text-white"
-          >
-            {formatCurrency(amount)}
-          </motion.div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-12">
             <button
               onClick={() => handleStep("subtract")}
               disabled={amount < 1}
