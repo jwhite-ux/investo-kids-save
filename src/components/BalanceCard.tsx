@@ -135,7 +135,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             } as any}
           />
         )}
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col items-start space-y-4">
           <div className="space-y-1">
             <h3 className="text-lg font-medium text-white/90">{title}</h3>
             {interestRate && (
@@ -153,7 +153,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
           >
             {formatCurrency(amount)}
           </motion.div>
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => handleStep("subtract")}
               disabled={amount < 1}
