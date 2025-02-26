@@ -97,6 +97,36 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6 relative overflow-hidden flex-shrink-0`}
         onMouseMove={handleMouseMove}
       >
+        {type === 'cash' && (
+          <motion.div
+            className="pointer-events-none absolute -inset-px opacity-50"
+            style={{
+              background: "radial-gradient(circle 150px at var(--x) var(--y), rgba(255,255,255,0.5), transparent 60%)",
+              WebkitMaskImage: "radial-gradient(circle 150px at var(--x) var(--y), white, transparent)",
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            animate={{
+              '--x': followX,
+              '--y': followY,
+            } as any}
+          />
+        )}
+        <div className="flex justify-between items-start">
+          <CardHeader 
+            title={title} 
+            amount={amount} 
+            interestRate={interestRate}
+            onAmountChange={onBalanceChange}
+          />
+          <StepperControls amount={amount} onStep={handleStep} />
+        </div>
+      </Card>
+
+      <div className="relative">
         {type !== 'cash' && (
           <div className="absolute top-3 left-3 z-10">
             <div className="bg-white/70 backdrop-blur-sm rounded-full p-0.5 inline-flex shadow-sm scale-75">
@@ -129,41 +159,13 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             </div>
           </div>
         )}
-        
-        {type === 'cash' && (
-          <motion.div
-            className="pointer-events-none absolute -inset-px opacity-50"
-            style={{
-              background: "radial-gradient(circle 150px at var(--x) var(--y), rgba(255,255,255,0.5), transparent 60%)",
-              WebkitMaskImage: "radial-gradient(circle 150px at var(--x) var(--y), white, transparent)",
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-            animate={{
-              '--x': followX,
-              '--y': followY,
-            } as any}
-          />
-        )}
-        <div className="flex justify-between items-start">
-          <CardHeader 
-            title={title} 
-            amount={amount} 
-            interestRate={interestRate}
-            onAmountChange={onBalanceChange}
-          />
-          <StepperControls amount={amount} onStep={handleStep} />
-        </div>
-      </Card>
 
-      {(type === 'cash' || activeView === 'history') ? (
-        <TransactionHistory transactions={transactions} />
-      ) : (
-        <ProjectionsChart amount={amount} projections={projections!} type={type as 'savings' | 'investments'} />
-      )}
+        {(type === 'cash' || activeView === 'history') ? (
+          <TransactionHistory transactions={transactions} />
+        ) : (
+          <ProjectionsChart amount={amount} projections={projections!} type={type as 'savings' | 'investments'} />
+        )}
+      </div>
     </div>
   );
 };
