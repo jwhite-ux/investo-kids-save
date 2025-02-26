@@ -67,8 +67,7 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
   return (
     <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
       <div className="space-y-4">
-        <p className="text-sm font-medium text-gray-900">Transaction History:</p>
-        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+        <div className="max-h-[220px] overflow-y-auto pr-1">
           {aggregatedTransactions.length > 0 ? (
             aggregatedTransactions.map((dayData) => {
               return (
