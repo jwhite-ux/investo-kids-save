@@ -7,6 +7,7 @@ import { CardHeader } from "./balance/CardHeader";
 import { StepperControls } from "./balance/StepperControls";
 import { ProjectionsChart } from "./balance/ProjectionsChart";
 import { TransactionHistory } from "./balance/TransactionHistory";
+import { LineChart, Clock } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -126,31 +127,33 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
       </Card>
 
       {type !== 'cash' && (
-        <div className="flex justify-center mb-2">
-          <div className="bg-white/70 backdrop-blur-sm rounded-full p-1 inline-flex shadow-sm">
+        <div className="absolute top-4 left-4 z-10">
+          <div className="bg-white/70 backdrop-blur-sm rounded-full p-1 inline-flex shadow-sm scale-75">
             <button
               onClick={() => setActiveView('projections')}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+              className={`p-1.5 rounded-full transition-colors ${
                 activeView === 'projections'
                   ? type === 'savings' 
                     ? 'bg-blue-500 text-white' 
                     : 'bg-purple-500 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
+              title="Projections"
             >
-              Projections
+              <LineChart size={16} />
             </button>
             <button
               onClick={() => setActiveView('history')}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+              className={`p-1.5 rounded-full transition-colors ${
                 activeView === 'history'
                   ? type === 'savings' 
                     ? 'bg-blue-500 text-white' 
                     : 'bg-purple-500 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
+              title="History"
             >
-              History
+              <Clock size={16} />
             </button>
           </div>
         </div>
