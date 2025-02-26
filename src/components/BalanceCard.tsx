@@ -97,6 +97,39 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
         className={`balance-card bg-gradient-to-br ${getGradient(type)} p-6 relative overflow-hidden flex-shrink-0`}
         onMouseMove={handleMouseMove}
       >
+        {type !== 'cash' && (
+          <div className="absolute top-3 left-3 z-10">
+            <div className="bg-white/70 backdrop-blur-sm rounded-full p-0.5 inline-flex shadow-sm scale-75">
+              <button
+                onClick={() => setActiveView('projections')}
+                className={`p-1 rounded-full transition-colors ${
+                  activeView === 'projections'
+                    ? type === 'savings' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-purple-500 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                title="Projections"
+              >
+                <LineChart size={14} />
+              </button>
+              <button
+                onClick={() => setActiveView('history')}
+                className={`p-1 rounded-full transition-colors ${
+                  activeView === 'history'
+                    ? type === 'savings' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-purple-500 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                title="History"
+              >
+                <Clock size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+        
         {type === 'cash' && (
           <motion.div
             className="pointer-events-none absolute -inset-px opacity-50"
@@ -125,39 +158,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
           <StepperControls amount={amount} onStep={handleStep} />
         </div>
       </Card>
-
-      {type !== 'cash' && (
-        <div className="absolute top-4 left-4 z-10">
-          <div className="bg-white/70 backdrop-blur-sm rounded-full p-1 inline-flex shadow-sm scale-75">
-            <button
-              onClick={() => setActiveView('projections')}
-              className={`p-1.5 rounded-full transition-colors ${
-                activeView === 'projections'
-                  ? type === 'savings' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-purple-500 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-              title="Projections"
-            >
-              <LineChart size={16} />
-            </button>
-            <button
-              onClick={() => setActiveView('history')}
-              className={`p-1.5 rounded-full transition-colors ${
-                activeView === 'history'
-                  ? type === 'savings' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-purple-500 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-              title="History"
-            >
-              <Clock size={16} />
-            </button>
-          </div>
-        </div>
-      )}
 
       {(type === 'cash' || activeView === 'history') ? (
         <TransactionHistory transactions={transactions} />
