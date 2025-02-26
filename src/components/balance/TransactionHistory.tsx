@@ -22,10 +22,6 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
     t.category !== "cash" && // Only savings and investments earn interest
     ((t.amount < 1) || (t.amount < 20 && t.amount / 100 < 0.1)) // Small amounts or < 0.1% of principal
   );
-  
-  const latestInterest = interestTransactions.length > 0 
-    ? interestTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
-    : null;
 
   // Group transactions by date
   const transactionsByDate = transactions.reduce((acc, transaction) => {
@@ -68,39 +64,9 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
     };
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const formatInterestDate = (dateString: string) => {
-    const now = new Date();
-    
-    // Check if the date is today
-    if (format(now, 'MMM d, yyyy') === dateString) {
-      return 'Today';
-    }
-    
-    // Check if the date is yesterday
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (format(yesterday, 'MMM d, yyyy') === dateString) {
-      return 'Yesterday';
-    }
-    
-    // Otherwise, return the date
-    return dateString;
-  };
-
   return (
     <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
       <div className="space-y-4">
-        {latestInterest && latestInterest.category !== "cash" && (
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3">
-            <p className="text-sm text-blue-800 font-medium">
-              Interest was last added {formatInterestDate(format(new Date(latestInterest.date), "MMM d, yyyy"))}
-              <span className="font-bold ml-1">
-                (+{formatCurrency(latestInterest.amount)})
-              </span>
-            </p>
-          </div>
-        )}
-        
         <p className="text-sm font-medium text-gray-900">Transaction History:</p>
         <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
           {aggregatedTransactions.length > 0 ? (
@@ -118,7 +84,7 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
                   )}
                   {dayData.interest > 0 && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Interest earned</span>
+                      <span className="text-gray-600">Interest accrued</span>
                       <span className="font-medium text-blue-600">
                         +{formatCurrency(dayData.interest)}
                       </span>
