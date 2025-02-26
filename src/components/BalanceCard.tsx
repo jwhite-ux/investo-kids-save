@@ -2,7 +2,7 @@
 import { useMotionValue, useSpring, motion } from "framer-motion";
 import { Card } from "./ui/card";
 import { calculateProjectedBalance, getAnnualRate } from "../utils/format";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { CardHeader } from "./balance/CardHeader";
 import { StepperControls } from "./balance/StepperControls";
 import { ProjectionsChart } from "./balance/ProjectionsChart";
@@ -51,6 +51,7 @@ const getInterestRate = (type: string) => {
 };
 
 export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceChange, transactions }: BalanceCardProps) => {
+  const [activeView, setActiveView] = useState<'projections' | 'history'>(type !== 'cash' ? 'projections' : 'history');
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -88,13 +89,6 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     fiveYears: calculateProjectedBalance(amount, annualRate, 1825),
   } : null;
 
-  // Find the most recent interest transaction if any
-  const lastInterestTransaction = transactions.find(t => 
-    t.type === "add" && 
-    // Look for small fractional amounts typical of interest payments
-    (t.amount < 1 || (t.amount / amount < 0.1 && t.amount > 0))
-  );
-
   return (
     <div className="flex flex-col space-y-4 h-full">
       <Card 
@@ -126,16 +120,46 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             amount={amount} 
             interestRate={interestRate}
             onAmountChange={onBalanceChange}
-            lastInterestTransaction={lastInterestTransaction}
           />
           <StepperControls amount={amount} onStep={handleStep} />
         </div>
       </Card>
 
-      {projections && amount > 0 ? (
-        <ProjectionsChart amount={amount} projections={projections} type={type as 'savings' | 'investments'} />
-      ) : (
+      {type !== 'cash' && (
+        <div className="flex justify-center mb-2">
+          <div className="bg-white/70 backdrop-blur-sm rounded-full p-1 inline-flex shadow-sm">
+            <button
+              onClick={() => setActiveView('projections')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                activeView === 'projections'
+                  ? type === 'savings' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-purple-500 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Projections
+            </button>
+            <button
+              onClick={() => setActiveView('history')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                activeView === 'history'
+                  ? type === 'savings' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-purple-500 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              History
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(type === 'cash' || activeView === 'history') ? (
         <TransactionHistory transactions={transactions} />
+      ) : (
+        <ProjectionsChart amount={amount} projections={projections!} type={type as 'savings' | 'investments'} />
       )}
     </div>
   );
