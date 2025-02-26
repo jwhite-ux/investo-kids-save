@@ -110,7 +110,7 @@ const Index = () => {
         
         // Apply interest to savings (NOT cash)
         if (account.balances.savings > 0) {
-          const savingsRate = getAnnualRate('savings');
+          const savingsRate = getAnnualRate('savings'); // This returns 0.045 for 4.5%
           const accruedInterest = calculateInterest(account.balances.savings, savingsRate, daysPassed);
           
           if (accruedInterest >= 0.01) { // Only apply if interest is meaningful
@@ -132,7 +132,7 @@ const Index = () => {
         
         // Apply interest to investments (NOT cash)
         if (account.balances.investments > 0) {
-          const investmentRate = getAnnualRate('investments');
+          const investmentRate = getAnnualRate('investments'); // This returns 0.10 for 10%
           const accruedInterest = calculateInterest(account.balances.investments, investmentRate, daysPassed);
           
           if (accruedInterest >= 0.01) { // Only apply if interest is meaningful
