@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Card } from "../ui/card";
 import { formatCurrency } from "../../utils/format";
@@ -15,44 +16,60 @@ interface TransactionHistoryProps {
 }
 
 export const TransactionHistory = ({ transactions }: TransactionHistoryProps) => {
-  // Find the latest interest transaction if any
-  const latestInterest = transactions
-    .filter(t => t.type === "add" && (t.amount < 1 || t.amount / 100 < 0.1))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  // Find interest transactions - they are small amounts added to savings or investments
+  const interestTransactions = transactions.filter(t => 
+    t.type === "add" && 
+    t.category !== "cash" && // Only savings and investments earn interest
+    ((t.amount < 1) || (t.amount < 20 && t.amount / 100 < 0.1)) // Small amounts or < 0.1% of principal
+  );
+  
+  const latestInterest = interestTransactions.length > 0 
+    ? interestTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    : null;
 
-  // Aggregate transactions by date
-  const aggregatedTransactions = transactions.reduce((acc, transaction) => {
-    const date = format(new Date(transaction.date), "MMM d, yyyy");
+  // Group transactions by date
+  const transactionsByDate = transactions.reduce((acc, transaction) => {
+    const dateStr = format(new Date(transaction.date), "MMM d, yyyy");
     
-    if (!acc[date]) {
-      acc[date] = {
-        add: 0,
-        subtract: 0,
-        interest: 0
-      };
+    if (!acc[dateStr]) {
+      acc[dateStr] = [];
     }
     
-    // Detect interest transactions (small additions that are likely interest)
-    if (transaction.type === "add" && 
-        (transaction.amount < 1 || (transaction.amount / 100 < 0.1 && transaction.amount > 0))) {
-      acc[date].interest += transaction.amount;
-    } else if (transaction.type === "add") {
-      acc[date].add += transaction.amount;
-    } else {
-      acc[date].subtract += transaction.amount;
-    }
+    // Add a flag to identify interest transactions
+    const isInterest = interestTransactions.some(it => it.id === transaction.id);
+    
+    acc[dateStr].push({
+      ...transaction,
+      isInterest
+    });
     
     return acc;
-  }, {} as Record<string, { add: number; subtract: number; interest: number }>);
+  }, {} as Record<string, (Transaction & { isInterest?: boolean })[]>);
 
-  // Convert aggregated data to array and sort by date (most recent first)
-  const sortedDates = Object.keys(aggregatedTransactions).sort((a, b) => 
-    new Date(b).getTime() - new Date(a).getTime()
-  );
+  // Calculate totals for each date
+  const aggregatedTransactions = Object.entries(transactionsByDate).map(([date, txs]) => {
+    const add = txs
+      .filter(t => t.type === "add" && !t.isInterest)
+      .reduce((sum, t) => sum + t.amount, 0);
+      
+    const interest = txs
+      .filter(t => t.isInterest)
+      .reduce((sum, t) => sum + t.amount, 0);
+      
+    const subtract = txs
+      .filter(t => t.type === "subtract")
+      .reduce((sum, t) => sum + t.amount, 0);
+      
+    return {
+      date,
+      add,
+      interest,
+      subtract
+    };
+  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const formatInterestDate = (dateString: string) => {
     const now = new Date();
-    const date = new Date(dateString);
     
     // Check if the date is today
     if (format(now, 'MMM d, yyyy') === dateString) {
@@ -73,7 +90,7 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
   return (
     <Card className="p-4 bg-white/50 backdrop-blur-sm flex-1">
       <div className="space-y-4">
-        {latestInterest && (
+        {latestInterest && latestInterest.category !== "cash" && (
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3">
             <p className="text-sm text-blue-800 font-medium">
               Interest was last added {formatInterestDate(format(new Date(latestInterest.date), "MMM d, yyyy"))}
@@ -86,33 +103,32 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
         
         <p className="text-sm font-medium text-gray-900">Transaction History:</p>
         <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-          {sortedDates.length > 0 ? (
-            sortedDates.map((date) => {
-              const dayTransactions = aggregatedTransactions[date];
+          {aggregatedTransactions.length > 0 ? (
+            aggregatedTransactions.map((dayData) => {
               return (
-                <div key={date} className="space-y-1 pb-2 border-b border-gray-100 last:border-0">
-                  <div className="text-xs font-medium text-gray-500">{date}</div>
-                  {dayTransactions.add > 0 && (
+                <div key={dayData.date} className="space-y-1 pb-2 border-b border-gray-100 last:border-0">
+                  <div className="text-xs font-medium text-gray-500">{dayData.date}</div>
+                  {dayData.add > 0 && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-600">Added</span>
                       <span className="font-medium text-green-600">
-                        +{formatCurrency(dayTransactions.add)}
+                        +{formatCurrency(dayData.add)}
                       </span>
                     </div>
                   )}
-                  {dayTransactions.interest > 0 && (
+                  {dayData.interest > 0 && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-600">Interest earned</span>
                       <span className="font-medium text-blue-600">
-                        +{formatCurrency(dayTransactions.interest)}
+                        +{formatCurrency(dayData.interest)}
                       </span>
                     </div>
                   )}
-                  {dayTransactions.subtract > 0 && (
+                  {dayData.subtract > 0 && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-600">Withdrawn</span>
                       <span className="font-medium text-red-600">
-                        -{formatCurrency(dayTransactions.subtract)}
+                        -{formatCurrency(dayData.subtract)}
                       </span>
                     </div>
                   )}

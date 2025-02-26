@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
 import { Plus } from "lucide-react";
-import { getAnnualRate } from "../utils/format";
+import { getAnnualRate, calculateInterest } from "../utils/format";
 
 interface AccountBalances {
   cash: number;
@@ -111,10 +111,9 @@ const Index = () => {
         // Apply interest to savings (NOT cash)
         if (account.balances.savings > 0) {
           const savingsRate = getAnnualRate('savings');
-          const dailyRate = savingsRate / 365;
-          const accruedInterest = account.balances.savings * (Math.pow(1 + dailyRate, daysPassed) - 1);
+          const accruedInterest = calculateInterest(account.balances.savings, savingsRate, daysPassed);
           
-          if (accruedInterest > 0.01) { // Only apply if interest is meaningful
+          if (accruedInterest >= 0.01) { // Only apply if interest is meaningful
             newAccount.balances.savings += accruedInterest;
             
             // Create an interest transaction
@@ -134,10 +133,9 @@ const Index = () => {
         // Apply interest to investments (NOT cash)
         if (account.balances.investments > 0) {
           const investmentRate = getAnnualRate('investments');
-          const dailyRate = investmentRate / 365;
-          const accruedInterest = account.balances.investments * (Math.pow(1 + dailyRate, daysPassed) - 1);
+          const accruedInterest = calculateInterest(account.balances.investments, investmentRate, daysPassed);
           
-          if (accruedInterest > 0.01) { // Only apply if interest is meaningful
+          if (accruedInterest >= 0.01) { // Only apply if interest is meaningful
             newAccount.balances.investments += accruedInterest;
             
             // Create an interest transaction
