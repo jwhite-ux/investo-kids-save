@@ -129,7 +129,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
       <div className="relative">
         {type !== 'cash' && (
           <div className="absolute top-3 left-3 z-10">
-            <div className="bg-white/70 backdrop-blur-sm rounded-full p-0.5 inline-flex shadow-sm scale-75">
+            <div className="bg-white/70 backdrop-blur-sm rounded-full p-0.5 inline-flex shadow-sm">
               <button
                 onClick={() => setActiveView('projections')}
                 className={`p-1 rounded-full transition-colors ${
