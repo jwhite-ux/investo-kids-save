@@ -23,13 +23,22 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
     if (!acc[date]) {
       acc[date] = {
         add: 0,
-        subtract: 0
+        subtract: 0,
+        interest: 0
       };
     }
     
-    acc[date][transaction.type] += transaction.amount;
+    // Detect interest transactions (small additions that are likely interest)
+    if (transaction.type === "add" && 
+        (transaction.amount < 1 || 
+         (transaction.category !== "cash" && transaction.amount / 10 < 1))) {
+      acc[date].interest += transaction.amount;
+    } else {
+      acc[date][transaction.type] += transaction.amount;
+    }
+    
     return acc;
-  }, {} as Record<string, { add: number; subtract: number }>);
+  }, {} as Record<string, { add: number; subtract: number; interest: number }>);
 
   // Convert aggregated data to array and sort by date (most recent first)
   const sortedDates = Object.keys(aggregatedTransactions).sort((a, b) => 
@@ -51,6 +60,14 @@ export const TransactionHistory = ({ transactions }: TransactionHistoryProps) =>
                     <span className="text-gray-600">Added</span>
                     <span className="font-medium text-green-600">
                       +{formatCurrency(dayTransactions.add)}
+                    </span>
+                  </div>
+                )}
+                {dayTransactions.interest > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Interest earned</span>
+                    <span className="font-medium text-blue-600">
+                      +{formatCurrency(dayTransactions.interest)}
                     </span>
                   </div>
                 )}

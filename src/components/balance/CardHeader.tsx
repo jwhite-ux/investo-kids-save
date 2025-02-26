@@ -3,15 +3,25 @@ import { motion } from "framer-motion";
 import { formatCurrency } from "../../utils/format";
 import { useState } from "react";
 import { Input } from "../ui/input";
+import { format, isToday, isYesterday } from "date-fns";
+
+interface Transaction {
+  id: string;
+  date: Date;
+  amount: number;
+  type: "add" | "subtract";
+  category: "cash" | "savings" | "investments";
+}
 
 interface CardHeaderProps {
   title: string;
   amount: number;
   interestRate: string | null;
   onAmountChange?: (newAmount: number) => void;
+  lastInterestTransaction?: Transaction;
 }
 
-export const CardHeader = ({ title, amount, interestRate, onAmountChange }: CardHeaderProps) => {
+export const CardHeader = ({ title, amount, interestRate, onAmountChange, lastInterestTransaction }: CardHeaderProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(amount.toString());
 
@@ -40,12 +50,29 @@ export const CardHeader = ({ title, amount, interestRate, onAmountChange }: Card
     }
   };
 
+  const formatLastInterestDate = (date: Date) => {
+    if (isToday(date)) {
+      return 'Interest added today';
+    } else if (isYesterday(date)) {
+      return 'Interest added yesterday';
+    } else {
+      return `Interest added on ${format(date, 'MMM d')}`;
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="space-y-1">
         <h3 className="text-lg font-medium text-white/90">{title}</h3>
         {interestRate && (
-          <p className="text-sm font-medium text-white/75">{interestRate}</p>
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-white/75">{interestRate}</p>
+            {lastInterestTransaction && (
+              <p className="text-xs text-white/60">
+                {formatLastInterestDate(new Date(lastInterestTransaction.date))}
+              </p>
+            )}
+          </div>
         )}
         {!interestRate && (
           <p className="text-sm font-medium text-white/75">&nbsp;</p>

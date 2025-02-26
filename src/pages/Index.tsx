@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
 import { Plus } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { getAnnualRate } from "../utils/format";
 
 interface AccountBalances {
   cash: number;
@@ -14,6 +15,7 @@ interface KidsAccount {
   id: string;
   name: string;
   balances: AccountBalances;
+  lastInterestUpdate: Date;
 }
 
 interface Transaction {
@@ -28,14 +30,28 @@ interface Transaction {
 const Index = () => {
   const [accounts, setAccounts] = useState<KidsAccount[]>(() => {
     const savedAccounts = localStorage.getItem('accounts');
-    return savedAccounts ? JSON.parse(savedAccounts) : [{
+    if (savedAccounts) {
+      const parsedAccounts = JSON.parse(savedAccounts, (key, value) => {
+        if (key === 'lastInterestUpdate') return new Date(value);
+        return value;
+      });
+      
+      // Ensure lastInterestUpdate exists for migrating old accounts
+      return parsedAccounts.map((account: any) => ({
+        ...account,
+        lastInterestUpdate: account.lastInterestUpdate || new Date(),
+      }));
+    }
+    
+    return [{
       id: crypto.randomUUID(),
       name: "Kid's Account",
       balances: {
         cash: 0,
         savings: 0,
         investments: 0,
-      }
+      },
+      lastInterestUpdate: new Date()
     }];
   });
 
@@ -58,10 +74,100 @@ const Index = () => {
     accountId: "",
   });
 
+  // Apply accrued interest on app load and then daily
+  useEffect(() => {
+    // Apply interest immediately when app loads
+    applyAccruedInterest();
+    
+    // Set up daily interest application
+    const dailyInterestInterval = setInterval(() => {
+      applyAccruedInterest();
+    }, 86400000); // 24 hours in milliseconds
+    
+    return () => clearInterval(dailyInterestInterval);
+  }, []);
+
+  // Save to localStorage whenever accounts or transactions change
   useEffect(() => {
     localStorage.setItem('accounts', JSON.stringify(accounts));
     localStorage.setItem('transactions', JSON.stringify(transactions));
   }, [accounts, transactions]);
+
+  const applyAccruedInterest = () => {
+    const now = new Date();
+    
+    setAccounts(prevAccounts => {
+      let hasUpdates = false;
+      const updatedAccounts = prevAccounts.map(account => {
+        const lastUpdate = new Date(account.lastInterestUpdate);
+        const daysPassed = Math.floor((now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Only apply interest if at least 1 day has passed
+        if (daysPassed < 1) return account;
+        
+        const newAccount = { ...account };
+        let newTransactions: Transaction[] = [];
+        
+        // Apply interest to savings
+        if (account.balances.savings > 0) {
+          const savingsRate = getAnnualRate('savings');
+          const dailyRate = savingsRate / 365;
+          const accruedInterest = account.balances.savings * (Math.pow(1 + dailyRate, daysPassed) - 1);
+          
+          if (accruedInterest > 0.01) { // Only apply if interest is meaningful
+            newAccount.balances.savings += accruedInterest;
+            
+            // Create an interest transaction
+            newTransactions.push({
+              id: crypto.randomUUID(),
+              date: new Date(),
+              amount: accruedInterest,
+              type: "add",
+              category: "savings",
+              accountId: account.id,
+            });
+            
+            hasUpdates = true;
+          }
+        }
+        
+        // Apply interest to investments
+        if (account.balances.investments > 0) {
+          const investmentRate = getAnnualRate('investments');
+          const dailyRate = investmentRate / 365;
+          const accruedInterest = account.balances.investments * (Math.pow(1 + dailyRate, daysPassed) - 1);
+          
+          if (accruedInterest > 0.01) { // Only apply if interest is meaningful
+            newAccount.balances.investments += accruedInterest;
+            
+            // Create an interest transaction
+            newTransactions.push({
+              id: crypto.randomUUID(),
+              date: new Date(),
+              amount: accruedInterest,
+              type: "add",
+              category: "investments",
+              accountId: account.id,
+            });
+            
+            hasUpdates = true;
+          }
+        }
+        
+        // Update last interest timestamp
+        newAccount.lastInterestUpdate = now;
+        
+        // Add interest transactions
+        if (newTransactions.length > 0) {
+          setTransactions(prev => [...newTransactions, ...prev]);
+        }
+        
+        return newAccount;
+      });
+      
+      return hasUpdates ? updatedAccounts : prevAccounts;
+    });
+  };
 
   const handleTransaction = (amount: number) => {
     const newTransaction: Transaction = {
@@ -103,7 +209,8 @@ const Index = () => {
         cash: 0,
         savings: 0,
         investments: 0,
-      }
+      },
+      lastInterestUpdate: new Date()
     };
     setAccounts(prev => [...prev, newAccount]);
   };

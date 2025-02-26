@@ -88,6 +88,13 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
     fiveYears: calculateProjectedBalance(amount, annualRate, 1825),
   } : null;
 
+  // Find the most recent interest transaction if any
+  const lastInterestTransaction = transactions.find(t => 
+    t.type === "add" && 
+    // Look for small fractional amounts typical of interest payments
+    (t.amount < 1 || (t.amount / amount < 0.1 && t.amount > 0))
+  );
+
   return (
     <div className="flex flex-col space-y-4 h-full">
       <Card 
@@ -119,6 +126,7 @@ export const BalanceCard = ({ title, amount, type, onAdd, onSubtract, onBalanceC
             amount={amount} 
             interestRate={interestRate}
             onAmountChange={onBalanceChange}
+            lastInterestTransaction={lastInterestTransaction}
           />
           <StepperControls amount={amount} onStep={handleStep} />
         </div>
