@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { BalanceCard } from "../components/BalanceCard";
 import { TransactionModal } from "../components/TransactionModal";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { getAnnualRate, calculateInterest } from "../utils/format";
+import { Button } from "../components/ui/button";
 
 interface AccountBalances {
   cash: number;
@@ -251,6 +251,28 @@ const Index = () => {
     }));
   };
 
+  const resetData = () => {
+    // Clear transactions from localStorage
+    localStorage.removeItem('transactions');
+    
+    // Keep account names but reset balances and lastInterestUpdate
+    const resetAccounts = accounts.map(account => ({
+      ...account,
+      balances: {
+        cash: 0,
+        savings: 0,
+        investments: 0
+      },
+      lastInterestUpdate: new Date()
+    }));
+    
+    localStorage.setItem('accounts', JSON.stringify(resetAccounts));
+    
+    // Update state
+    setTransactions([]);
+    setAccounts(resetAccounts);
+  };
+
   const selectedAccount = accounts.find(account => account.id === selectedAccountId);
 
   return (
@@ -260,13 +282,23 @@ const Index = () => {
           <h1 className="text-4xl font-bold tracking-tight text-gray-900">
             Invest.Kids
           </h1>
-          <button
-            onClick={addNewAccount}
-            className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Add Account
-          </button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={resetData}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reset Data
+            </Button>
+            <button
+              onClick={addNewAccount}
+              className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add Account
+            </button>
+          </div>
         </div>
 
         <div className="relative mb-6 overflow-x-auto">
