@@ -108,7 +108,7 @@ const Index = () => {
         const newAccount = { ...account };
         let newTransactions: Transaction[] = [];
         
-        // Apply interest to savings
+        // Apply interest to savings (NOT cash)
         if (account.balances.savings > 0) {
           const savingsRate = getAnnualRate('savings');
           const dailyRate = savingsRate / 365;
@@ -131,7 +131,7 @@ const Index = () => {
           }
         }
         
-        // Apply interest to investments
+        // Apply interest to investments (NOT cash)
         if (account.balances.investments > 0) {
           const investmentRate = getAnnualRate('investments');
           const dailyRate = investmentRate / 365;
